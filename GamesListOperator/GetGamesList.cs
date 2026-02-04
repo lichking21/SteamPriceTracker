@@ -1,9 +1,10 @@
 using System.Linq.Expressions;
 using System.Text.Json;
 
-public class GetGamesList
+namespace GamesListOperator;
+public class GamesListController
 {
-    // TODO: get games list by sending request
+    // !!!!TODO: get games list by sending request!!!!
 
     private static string folderPath = "Lists";
     private readonly string[] jsonPaths = {
@@ -12,6 +13,9 @@ public class GetGamesList
 
     private readonly JsonSerializerOptions options = new JsonSerializerOptions {PropertyNameCaseInsensitive = true}; 
 
+    /// <summary>
+    /// Parsing json lists with games
+    /// </summary>
     public async Task<List<GameItem>> ParsedJson()
     {
         List<GameItem> allGames = new List<GameItem>();
@@ -39,5 +43,4 @@ public class GetGamesList
 
         return allGames;
     }
-    
 }

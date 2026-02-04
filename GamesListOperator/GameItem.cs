@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 
+namespace GamesListOperator;
 public class RootObject
 {
     [JsonPropertyName("response")]

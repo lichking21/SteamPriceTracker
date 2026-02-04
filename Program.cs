@@ -1,4 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
+using GamesListOperator;
+using DataBaseOperator;
+
 class Program
 {
     static async Task Main()
@@ -9,9 +12,18 @@ class Program
 
         IConfiguration configuration = builder.Build();
 
-        DBImport dbImport = new DBImport(configuration);
-        GetGamesList getList = new GetGamesList();
+        DBController dBController = new DBController(configuration);
+        GamesListController getList = new GamesListController();
+        CMD cmd = new CMD(dBController);
 
-        await dbImport.ImportDataToDB(await getList.ParsedJson());
+        await dBController.ImportDataToDB(await getList.ParsedJson());
+
+        try {
+            await cmd.GetGameTitle();
+        }
+        catch(Exception ex)
+        {
+            Console.WriteLine($"(ERROR) Couldn't get game title: {ex}");
+        }
     }
 }
