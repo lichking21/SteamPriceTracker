@@ -5,10 +5,8 @@ namespace DataBaseOperator;
 /// TODO: 
 /// class will be changed into TgBotController
 /// input from cmd will be replaced by user input from telegram bot
-public class CMD(DBController dBController)
+public class CMD()
 {
-    private DBController _dbController = dBController;
-
     /// <summary>
     /// Reads user input from CMD
     /// </summary>
@@ -44,13 +42,13 @@ public class CMD(DBController dBController)
     /// Returns game title appearances by userInput
     /// </summary>
     /// <returns>Game title</returns>
-    public async Task<string> GetGameTitle()
+    public async Task<string> GetGameTitle(DBController dbController)
     {
         while (true)
         {
             string userInput = GetUserInput();
 
-            List<string> matches = await _dbController.ExportDataByTitle(userInput);
+            List<string> matches = await dbController.ExportDataByTitle(userInput);
             int count = matches.Count;
             
             if (count == 0)

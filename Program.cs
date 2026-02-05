@@ -12,18 +12,13 @@ class Program
 
         IConfiguration configuration = builder.Build();
 
-        DBController dBController = new DBController(configuration);
         GamesListController getList = new GamesListController();
-        CMD cmd = new CMD(dBController);
+        CMD cmd = new CMD();
+        DBController dbController = new DBController(configuration, cmd);
 
-        await dBController.ImportDataToDB(await getList.ParsedJson());
+        await dbController.ImportDataToDB(await getList.ParsedJson());
 
-        try {
-            await cmd.GetGameTitle();
-        }
-        catch(Exception ex)
-        {
-            Console.WriteLine($"(ERROR) Couldn't get game title: {ex}");
-        }
+        int id = await dbController.GetGameID();
+        Console.WriteLine($"(DEBUG) Your ID is: {id}");
     }
 }

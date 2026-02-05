@@ -6,11 +6,14 @@ namespace DataBaseOperator;
 public class DBController
 {
     private readonly string _connectionString;
+    private readonly CMD _cmd;
 
-    public DBController(IConfiguration configuration)
+    public DBController(IConfiguration configuration, CMD cmd)
     {
         _connectionString = configuration.GetConnectionString("DefaultConnection") 
                         ?? throw new ArgumentNullException("ConnectionString is null");
+
+        _cmd = cmd;
     }
 
 
@@ -28,6 +31,18 @@ public class DBController
         using (var conn = new NpgsqlConnection(_connectionString))
         {
             await conn.OpenAsync();
+
+            // Check if table is not empty
+            using (var cmdCheck = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM public.games LIMIT 1)", conn))
+            {
+                var exists = (bool?)await cmdCheck.ExecuteScalarAsync() ?? false;
+
+                if (exists)
+                {
+                    Console.WriteLine("(DEBUG) Data is up to date");
+                    return;
+                }
+            }
 
             using (var transaction =  await conn.BeginTransactionAsync())
             {
@@ -78,19 +93,19 @@ public class DBController
 
         if (string.IsNullOrEmpty(title))
         {
-            Console.WriteLine("(WARNING) title value can't be empty or null");
+            Console.WriteLine("(ERROR) Title value can't be empty or null");
             return result;   
         }
 
         var sql = @"SELECT title FROM games WHERE title ILIKE @titleSearch";
 
-        using (var connection = new NpgsqlConnection(_connectionString))
+        using (var conn = new NpgsqlConnection(_connectionString))
         {
-            await connection.OpenAsync();
+            await conn.OpenAsync();
 
             try
             {
-                using (var cmd = new NpgsqlCommand(sql, connection))
+                using (var cmd = new NpgsqlCommand(sql, conn))
                 {
                     cmd.Parameters.AddWithValue("@titleSearch", $"%{title}%");
 
@@ -106,7 +121,7 @@ public class DBController
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"(ERROR) Seach failed {title}: {ex}");
+                Console.WriteLine($"(ERROR) Title search failed {title}: {ex}");
             }
         }
 
@@ -116,8 +131,43 @@ public class DBController
     /// <summary>
     /// Returns game's ID by its Title
     /// </summary>
-    // public async Task GetGameID(string title)
-    // {
+    public async Task<int> GetGameID()
+    {
+        int id = 0;
+        string title = await _cmd.GetGameTitle(this);
+        if (string.IsNullOrEmpty(title))
+        {
+            Console.WriteLine("(ERROR) Title can't be null or empty");
+            return id;
+        }
+
+        var sql = "SELECT id FROM games WHERE title ILIKE @titleSearch";
         
-    // }
+        using (var conn = new NpgsqlConnection(_connectionString))
+        {
+            await conn.OpenAsync();
+
+            try
+            {
+                using (var command = new NpgsqlCommand(sql, conn))
+                {
+                    command.Parameters.AddWithValue("@titleSearch", $"%{title}%");
+
+                    using (var reader = await command.ExecuteReaderAsync())
+                    {
+                        while (await reader.ReadAsync())
+                        {
+                            id = reader.GetInt32(0);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"(ERROR) ID search failed: {ex}");
+            }
+        }
+
+        return id;
+    }
 }
