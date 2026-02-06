@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using Microsoft.Extensions.FileSystemGlobbing;
 
 namespace DataBaseOperator;
 
@@ -50,7 +51,14 @@ public class CMD()
 
             List<string> matches = await dbController.ExportDataByTitle(userInput);
             int count = matches.Count;
+            string? exactMatch = matches.FirstOrDefault(title => title.Equals(userInput, StringComparison.OrdinalIgnoreCase));
             
+            if (exactMatch != null)
+            {
+                Console.WriteLine($"(DEBUG) Exact match: {exactMatch}");
+                return exactMatch;
+            }
+
             if (count == 0)
             {
                 Console.WriteLine($"(WARNING) There is no game with title: {userInput}");
@@ -59,7 +67,7 @@ public class CMD()
             else if (count == 1)
             {
                 string resultTitle = matches[0];
-                Console.WriteLine($"(DEBUG) You choosed game: {resultTitle}");
+                //Console.WriteLine($"(DEBUG) You choosed game: {resultTitle}");
                 return resultTitle;
             }
             else if (count > 1)

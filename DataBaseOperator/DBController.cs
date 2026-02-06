@@ -129,7 +129,7 @@ public class DBController
     } 
 
     /// <summary>
-    /// Returns game's ID by its Title
+    /// Asks game title and returns its ID
     /// </summary>
     public async Task<int> GetGameID()
     {
@@ -141,7 +141,7 @@ public class DBController
             return id;
         }
 
-        var sql = "SELECT id FROM games WHERE title ILIKE @titleSearch";
+        var sql = "SELECT id FROM games WHERE title=@titleSearch LIMIT 1";
         
         using (var conn = new NpgsqlConnection(_connectionString))
         {
@@ -151,7 +151,7 @@ public class DBController
             {
                 using (var command = new NpgsqlCommand(sql, conn))
                 {
-                    command.Parameters.AddWithValue("@titleSearch", $"%{title}%");
+                    command.Parameters.AddWithValue("@titleSearch", title);
 
                     using (var reader = await command.ExecuteReaderAsync())
                     {
