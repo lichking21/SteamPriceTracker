@@ -12,7 +12,7 @@ public class CMD()
     /// Reads user input from CMD
     /// </summary>
     /// <returns>userInput value</returns>
-    private string GetUserInput()
+    public string GetUserInput()
     {
         Console.Write("Enter game title: ");
         string? userInput = Console.ReadLine();
@@ -43,13 +43,13 @@ public class CMD()
     /// Returns game title appearances by userInput
     /// </summary>
     /// <returns>Game title</returns>
-    public async Task<string> GetGameTitle(DBController dbController)
+    public async Task<string> ProccesSelection(MainDB db)
     {
         while (true)
         {
             string userInput = GetUserInput();
 
-            List<string> matches = await dbController.ExportDataByTitle(userInput);
+            List<string> matches = await db.ExportDataByTitle(userInput);
             int count = matches.Count;
             string? exactMatch = matches.FirstOrDefault(title => title.Equals(userInput, StringComparison.OrdinalIgnoreCase));
             
