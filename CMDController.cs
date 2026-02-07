@@ -1,7 +1,6 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.FileSystemGlobbing;
-
-namespace DataBaseOperator;
+using DataBaseOperator;
 
 /// TODO: 
 /// class will be changed into TgBotController
@@ -12,15 +11,13 @@ public class CMD()
     /// Reads user input from CMD
     /// </summary>
     /// <returns>userInput value</returns>
-    public string GetUserInput()
+    private string GetUserInput()
     {
-        Console.Write("Enter game title: ");
         string? userInput = Console.ReadLine();
 
         while (string.IsNullOrEmpty(userInput))
         {
-            Console.WriteLine("(WARNING) Game title can't be empty or null");
-            Console.Write("Enter game title: ");
+            Console.WriteLine("(WARNING) This field can't be empty or null");
             userInput = Console.ReadLine();
         }
 
@@ -39,6 +36,13 @@ public class CMD()
         }
     }
 
+    public string GetUserRegion()
+    {
+        Console.Write("Enter store region: ");
+        string region = GetUserInput();
+        return region;
+    }
+
     /// <summary>
     /// Returns game title appearances by userInput
     /// </summary>
@@ -47,6 +51,7 @@ public class CMD()
     {
         while (true)
         {
+            Console.Write("Enter game title: ");
             string userInput = GetUserInput();
 
             List<string> matches = await db.ExportDataByTitle(userInput);
@@ -77,5 +82,4 @@ public class CMD()
             }
         }
     }
-
 }

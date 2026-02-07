@@ -18,13 +18,13 @@ class Program
         Price price = new Price();
 
         await mainDB.ImportDataToDB(await getList.ParsedJson());
-
+        string region = cmd.GetUserRegion();
 
         while(true) 
         {
             string title = await cmd.ProccesSelection(mainDB);
             int gameId = await mainDB.GetGameID(title);
-            string gamePrice = await price.GetPrice(gameId);
+            string gamePrice = await price.GetPrice(gameId, region);
 
             Console.WriteLine($"(DEBUG) Game price: {gamePrice}");
          

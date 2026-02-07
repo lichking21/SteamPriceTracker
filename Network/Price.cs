@@ -5,9 +5,9 @@ namespace Network;
 
 public class Price
 {
-    public async Task<string> GetPrice(int gameId)
+    public async Task<string> GetPrice(int gameId, string region)
     {
-        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc=us&l=english";
+        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={region}&l=english";
         string finalPrice = "";
 
         HttpClient client = new HttpClient();
