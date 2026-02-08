@@ -37,7 +37,7 @@ public class WishlistDB : Database
         }
     }
 
-    public async Task UpdateWishlistItem(int gameId, string price, int discount)
+    public async Task UpdateWishlistItem(WishlistItem item)
     {
         var sql = @"UPDATE public.wishlist
                     SET price=@updPrice, discount=@updDiscount, last_update=NOW()
@@ -51,9 +51,9 @@ public class WishlistDB : Database
             {
                 try
                 {
-                    cmd.Parameters.AddWithValue("@updPrice", price);
-                    cmd.Parameters.AddWithValue("@updDiscount", discount);
-                    cmd.Parameters.AddWithValue("@id", gameId);
+                    cmd.Parameters.AddWithValue("@updPrice", item.Price);
+                    cmd.Parameters.AddWithValue("@updDiscount", item.Discount);
+                    cmd.Parameters.AddWithValue("@id", item.GameId);
                 }
                 catch (Exception ex)
                 {
@@ -65,7 +65,7 @@ public class WishlistDB : Database
         }
     }
 
-    public async Task AddWishListItem(int gameId, string price, int discount, string title)
+    public async Task AddWishListItem(WishlistItem item)
     {
         var sql = @"INSERT INTO public.wishlist(game_id, price, discount, last_update, title)
                     VALUES (@i, @p, @d, NOW(), @t)
@@ -79,19 +79,19 @@ public class WishlistDB : Database
             {
                 using (var cmd = new NpgsqlCommand(sql, conn))
                 {
-                    cmd.Parameters.AddWithValue("@i", gameId);
-                    cmd.Parameters.AddWithValue("@p", price);
-                    cmd.Parameters.AddWithValue("@d", discount);
-                    cmd.Parameters.AddWithValue("@t", title);
+                    cmd.Parameters.AddWithValue("@i", item.GameId);
+                    cmd.Parameters.AddWithValue("@p", item.Price);
+                    cmd.Parameters.AddWithValue("@d", item.Discount);
+                    cmd.Parameters.AddWithValue("@t", item.Title ?? "UNKNOWN");
 
                     await cmd.ExecuteNonQueryAsync();
-                    Console.WriteLine($"(DEBUG) {title} was added to WishlistDB");
+                    Console.WriteLine($"(DEBUG) {item.Title} was added to WishlistDB");
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"(ERROR)Failed to add {title} into WishlistDB: {ex}");
+                Console.WriteLine($"(ERROR)Failed to add {item.Title} into WishlistDB: {ex}");
             }
         }
     }

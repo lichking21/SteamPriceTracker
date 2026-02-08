@@ -81,5 +81,5 @@ public class CMD()
                 Console.WriteLine("(WARNING) Specify your request: ");
             }
         }
-    }
+    }    
 }
