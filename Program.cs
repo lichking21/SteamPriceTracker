@@ -1,32 +1,35 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.DependencyInjection;
 using GamesListOperator;
 using DataBaseOperator;
 using Network;
+using Microsoft.Extensions.Hosting;
 
 class Program
 {
     static async Task Main()
     {
-        IConfigurationBuilder builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
-        IConfiguration configuration = builder.Build();
+        using IHost host = Bootstrapper.BuildApp();
+        await host.StartAsync();
+        var services = host.Services;
 
-        GamesListController getList = new GamesListController();
-        CMD cmd = new CMD();
-        MainDB mainDB = new MainDB(configuration, cmd);
-        Price price = new Price();
+        var mainDB = host.Services.GetRequiredService<MainDB>();
+        var cmd = host.Services.GetRequiredService<CMD>();
+        var price = host.Services.GetRequiredService<Price>();
+        var getList = host.Services.GetRequiredService<GamesListController>();
+        var wishlistDB = host.Services.GetRequiredService<WishlistDB>();
 
         await mainDB.ImportDataToDB(await getList.ParsedJson());
-        string region = cmd.GetUserRegion();
+
+        price.SetUserPrice(cmd);
 
         while(true) 
         {
             string title = await cmd.ProccesSelection(mainDB);
             int gameId = await mainDB.GetGameID(title);
-            string gamePrice = await price.GetPrice(gameId, region);
+            (string gamePrice, int discount) = await price.GetPrice(gameId);
+            await wishlistDB.AddWishListItem(gameId, gamePrice, discount, title);
 
-            Console.WriteLine($"(DEBUG) Game price: {gamePrice}");
+            Console.WriteLine($"(DEBUG) Game price: {gamePrice} (-{discount}%)");
          
             Console.WriteLine("__________________________________");
             Console.WriteLine("|q     - to quit                 |");
