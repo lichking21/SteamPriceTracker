@@ -1,0 +1,20 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: legend
+      POSTGRES_USER: legend
+      POSTGRES_PASSWORD: "9874"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+  app:
+    build:
+      context: .
+      dockerfile: Containerfile
+    environment:
+      ConnectionStrings__DefaultConnection: Host=db;Port=5432;Database=legend;Username=legend;Password=9874
+    depends_on:
+      - db
+
+volumes:
+  pgdata:
