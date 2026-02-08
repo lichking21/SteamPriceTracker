@@ -34,7 +34,7 @@ class Program
             string title = await cmd.ProccesSelection(mainDB);
             int gameId = await mainDB.GetGameID(title);
             (string gamePrice, int discount) = await price.GetPrice(gameId);
-            await wishlistDB.AddWishListItem(gameId, gamePrice, discount, title);
+            await wishlistDB.AddWishListItem(new WishlistItem(gameId, gamePrice, discount, title));
 
             Console.WriteLine($"(DEBUG) Game price: {gamePrice} (-{discount}%)");
 
