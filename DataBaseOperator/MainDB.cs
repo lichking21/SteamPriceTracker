@@ -5,7 +5,7 @@ using GamesListOperator;
 namespace DataBaseOperator;
 public class MainDB : Database
 {
-    public MainDB(IConfiguration configuration, CMD cmd) : base(configuration){}
+    public MainDB(IConfiguration configuration) : base(configuration){}
 
 
     /// <summary>
@@ -60,12 +60,12 @@ public class MainDB : Database
                 }
 
                 await transaction.CommitAsync();
-                Console.WriteLine($"(SUCCESS) {gamesList.Count} games were imported to DB.");
+                Console.WriteLine($"(DEBUG) {gamesList.Count} games were imported to DB.");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                Console.WriteLine($"(ERROR) Failed to import data to DB: {ex.Message}");
+                Console.WriteLine($"(ERROR) Failed to import data to MainDB: {ex.Message}");
                 throw;
             }
         }
