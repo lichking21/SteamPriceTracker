@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.DependencyInjection;
+﻿﻿using Microsoft.Extensions.DependencyInjection;
 using GamesListOperator;
 using DataBaseOperator;
 using Network;
@@ -18,11 +18,18 @@ class Program
         var getList = host.Services.GetRequiredService<GamesListController>();
         var wishlistDB = host.Services.GetRequiredService<WishlistDB>();
 
+        if (Console.IsInputRedirected)
+        {
+            Console.WriteLine("(LOG) >>> No interactive input detected. Running background services only.");
+            await Task.Delay(Timeout.Infinite);
+            return;
+        }
+
         await mainDB.ImportDataToDB(await getList.ParsedJson());
 
         price.SetUserPrice(cmd);
 
-        while(true) 
+        while(true)
         {
             string title = await cmd.ProccesSelection(mainDB);
             int gameId = await mainDB.GetGameID(title);
@@ -30,17 +37,17 @@ class Program
             await wishlistDB.AddWishListItem(gameId, gamePrice, discount, title);
 
             Console.WriteLine($"(DEBUG) Game price: {gamePrice} (-{discount}%)");
-         
+
             Console.WriteLine("__________________________________");
             Console.WriteLine("|q     - to quit                 |");
             Console.WriteLine("|enter - to continue adding games|");
             Console.WriteLine("__________________________________");
 
             string? quit = Console.ReadLine();
-            if (quit == "q") 
+            if (quit == "q")
             {
                 break;
-            } 
+            }
         }
     }
 }

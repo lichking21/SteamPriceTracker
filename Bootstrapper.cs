@@ -4,6 +4,7 @@ using Microsoft.Extensions.Configuration;
 using DataBaseOperator;
 using Network;
 using GamesListOperator;
+using Bot;
 
 public static class Bootstrapper
 {
@@ -13,10 +14,11 @@ public static class Bootstrapper
 
         builder.Configuration
             .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .AddEnvironmentVariables();
 
         ConfigureServices(builder.Services);
-        
+
         return builder.Build();
     }
 
@@ -29,5 +31,6 @@ public static class Bootstrapper
         services.AddSingleton<GamesListController>();
 
         services.AddHostedService<PriceUpdateWorker>();
+        services.AddHostedService<EchoBotWorker>();
     }
 }
