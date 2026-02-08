@@ -1,3 +1,4 @@
+using System.Data;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 
@@ -97,6 +98,36 @@ public class WishlistDB : Database
 
     public async Task RemoveWishListItem(string title)
     {
-        
+        if (string.IsNullOrEmpty(title))
+        {
+            Console.WriteLine("(WARNING) Title can't be empty");
+        }
+
+        var sql = "DELETE FROM public.wishlist WHRE title=@searchTitle LIMIT 1";
+
+        using (var conn = GetConnection())
+        {
+            await conn.OpenAsync();
+
+            using (var cmd = new NpgsqlCommand(sql, conn))
+            {
+                try
+                {
+                    cmd.Parameters.AddWithValue("@searchTitle", title);
+
+                    var rows = await cmd.ExecuteNonQueryAsync();
+                    if (rows > 0) 
+                        Console.WriteLine($"(DEBUG) {title} was removed from wishlist");
+                    else 
+                        Console.WriteLine($"(WARNING) {title} wasn't found in wishlist");
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"(ERROR) Failed to remove {title} from wishlist: {ex}");
+                }
+            }
+        }
     }
+
+    
 }
