@@ -8,10 +8,10 @@ public class PriceOverview
     public int DiscountPercent {get; set;}
 
     [JsonPropertyName("initial_formatted")]
-    public string InitialPrice {get;set;} = "";
+    public string InitialPrice {get;set;} = "N/A";
 
     [JsonPropertyName("final_formatted")]
-    public string FinalPrice {get;set;} = "";
+    public string FinalPrice {get;set;} = "N/A";
 }
 
 public class GameData

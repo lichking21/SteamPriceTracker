@@ -5,16 +5,21 @@ namespace Network;
 
 public class Price
 {
-    public async Task<string> GetPrice(int gameId, string region)
-    {
-        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={region}&l=english";
-        string finalPrice = "";
+    private static readonly HttpClient _client = new HttpClient();
+    private string? _region;
 
-        HttpClient client = new HttpClient();
+    /// <summary>
+    /// Sets store prices according to users region
+    /// </summary>
+    public void SetUserPrice(CMD cmd) => _region = cmd.GetUserRegion(); 
+
+    public async Task<(string finalPrice, int discount)> GetPrice(int gameId)
+    {
+        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={_region}&l=english";
 
         try
         {
-            var response = await client.GetAsync(url);
+            var response = await _client.GetAsync(url);
             response.EnsureSuccessStatusCode();
 
             string jsonContent = await response.Content.ReadAsStringAsync();
@@ -26,7 +31,7 @@ public class Price
                 {
                     if (gameDetails.Data.IsFree)
                     {
-                        finalPrice = "free";
+                        return ("free", 0);
                     }
                     else if (gameDetails.Data.Price != null)
                     {
@@ -36,11 +41,11 @@ public class Price
                         {
                             Console.WriteLine($"Discount is: {price.DiscountPercent}%");
                             Console.WriteLine($"Initial price is: {price.InitialPrice}");
-                            finalPrice = price.FinalPrice;
+                            return (price.FinalPrice, price.DiscountPercent);
                         }
                         else
                         {
-                            finalPrice = price.FinalPrice;
+                            return (price.FinalPrice, price.DiscountPercent);
                         }
                     }
                 }
@@ -48,10 +53,9 @@ public class Price
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"(ERROR) Bad request: {ex}");
-            return "";
+            Console.WriteLine($"(ERROR) Couldn't update price for {gameId}: {ex}");
         }
 
-        return finalPrice;   
+        return ("N/A", 0);   
     }
 }
