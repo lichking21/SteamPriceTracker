@@ -1,4 +1,3 @@
-using System.Net.Http;
 using System.Text.Json;
 
 namespace Network;
@@ -7,11 +6,16 @@ public class Price
 {
     private static readonly HttpClient _client = new HttpClient();
     private string? _region;
+    public bool IsConfigured = false;
 
     /// <summary>
     /// Sets store prices according to users region
     /// </summary>
-    public void SetUserPrice(CMD cmd) => _region = cmd.GetUserRegion(); 
+    public void SetUserPrice(string region) {
+    
+        _region = region;
+        IsConfigured = true;
+    } 
 
     public async Task<(string finalPrice, int discount)> GetPrice(int gameId)
     {

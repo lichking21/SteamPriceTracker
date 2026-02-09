@@ -25,29 +25,15 @@ class Program
             return;
         }
 
+        string region = "kg";
+        string searchTitle = "Mortal Sin";
+
         await mainDB.ImportDataToDB(await getList.ParsedJson());
 
-        price.SetUserPrice(cmd);
-
-        while(true)
-        {
-            string title = await cmd.ProccesSelection(mainDB);
-            int gameId = await mainDB.GetGameID(title);
-            (string gamePrice, int discount) = await price.GetPrice(gameId);
-            await wishlistDB.AddWishListItem(new WishlistItem(gameId, gamePrice, discount, title));
-
-            Console.WriteLine($"(DEBUG) Game price: {gamePrice} (-{discount}%)");
-
-            Console.WriteLine("__________________________________");
-            Console.WriteLine("|q     - to quit                 |");
-            Console.WriteLine("|enter - to continue adding games|");
-            Console.WriteLine("__________________________________");
-
-            string? quit = Console.ReadLine();
-            if (quit == "q")
-            {
-                break;
-            }
-        }
+        price.SetUserPrice(region);
+        string title = await cmd.ProccesSelection(mainDB, searchTitle);
+        int gameId = await mainDB.GetGameID(title);
+        (string gamePrice, int discount) = await price.GetPrice(gameId);
+        await wishlistDB.AddWishListItem(new WishlistItem(gameId, gamePrice, discount, title));
     }
 }

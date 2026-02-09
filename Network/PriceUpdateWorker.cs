@@ -44,7 +44,8 @@ public class PriceUpdateWorker : BackgroundService
                     var data = await _price.GetPrice(id);
                     if (data.finalPrice != "N/A")
                     {
-                        await _wishlistDB.UpdateWishlistItem(id, data.finalPrice, data.discount);
+                        WishlistItem item = new WishlistItem(id, data.finalPrice, data.discount);
+                        await _wishlistDB.UpdateWishlistItem(item);
 
                         _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
                     }
@@ -58,6 +59,9 @@ public class PriceUpdateWorker : BackgroundService
             }
             catch (Exception ex)
             {
+                if (_stopToken.IsCancellationRequested)
+                    throw;
+
                 _logger.LogError($"(LOG_ERR) >>> Error in background updating: {ex}");
                 await Task.Delay(TimeSpan.FromMinutes(1), _stopToken);
             }

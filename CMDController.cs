@@ -47,39 +47,35 @@ public class CMD()
     /// Returns game title appearances by userInput
     /// </summary>
     /// <returns>Game title</returns>
-    public async Task<string> ProccesSelection(MainDB db)
+    public async Task<string> ProccesSelection(MainDB db, string title)
     {
-        while (true)
+        string resultTitle = "";
+
+        List<string> matches = await db.ExportDataByTitle(title);
+        int count = matches.Count;
+        string? exactMatch = matches.FirstOrDefault(title => title.Equals(title, StringComparison.OrdinalIgnoreCase));
+        
+        if (exactMatch != null)
         {
-            Console.Write("Enter game title: ");
-            string userInput = GetUserInput();
-
-            List<string> matches = await db.ExportDataByTitle(userInput);
-            int count = matches.Count;
-            string? exactMatch = matches.FirstOrDefault(title => title.Equals(userInput, StringComparison.OrdinalIgnoreCase));
-            
-            if (exactMatch != null)
-            {
-                Console.WriteLine($"(DEBUG) Exact match: {exactMatch}");
-                return exactMatch;
-            }
-
-            if (count == 0)
-            {
-                Console.WriteLine($"(WARNING) There is no game with title: {userInput}");
-                continue;
-            }
-            else if (count == 1)
-            {
-                string resultTitle = matches[0];
-                //Console.WriteLine($"(DEBUG) You choosed game: {resultTitle}");
-                return resultTitle;
-            }
-            else if (count > 1)
-            {
-                ShowSimilar(matches);
-                Console.WriteLine("(WARNING) Specify your request: ");
-            }
+            Console.WriteLine($"(DEBUG) Exact match: {exactMatch}");
+            return exactMatch;
         }
+
+        if (count == 0)
+        {
+            Console.WriteLine($"(WARNING) There is no game with title: {title}");
+        }
+        else if (count == 1)
+        {
+            resultTitle = matches[0];
+            return resultTitle;
+        }
+        else if (count > 1)
+        {
+            ShowSimilar(matches);
+            Console.WriteLine("(WARNING) Specify your request: ");
+        }
+    
+        return resultTitle;
     }    
 }
