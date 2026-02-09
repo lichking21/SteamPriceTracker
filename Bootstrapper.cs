@@ -5,6 +5,8 @@ using DataBaseOperator;
 using Network;
 using GamesListOperator;
 using Bot;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 public static class Bootstrapper
 {
@@ -17,15 +19,17 @@ public static class Bootstrapper
             .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
             .AddEnvironmentVariables();
 
-        ConfigureServices(builder.Services);
+        ConfigureServices(builder.Services, builder.Configuration);
 
         return builder.Build();
     }
 
-    public static void ConfigureServices(IServiceCollection services)
+    public static void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
-        services.AddSingleton<MainDB>();
-        services.AddSingleton<WishlistDB>();
+        services.AddDbContext<ApplicationContext>(
+            options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
+        );
+
         services.AddSingleton<CMD>();
         services.AddSingleton<Price>();
         services.AddSingleton<GamesListController>();

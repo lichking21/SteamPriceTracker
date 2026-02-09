@@ -1,6 +1,6 @@
-using System.Data;
 using Microsoft.Extensions.Configuration;
 using Npgsql;
+using DataBaseOperator.Entities;
 
 namespace DataBaseOperator;
 
@@ -29,7 +29,7 @@ public class WishlistDB : Database
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"(ERRO) Failed to get IDs from wishlist: {ex}");
+                    Console.WriteLine($"(ERROR) Failed to get IDs from wishlist: {ex}");
                 }
             }
 

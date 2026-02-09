@@ -1,6 +1,7 @@
 ﻿﻿using Microsoft.Extensions.DependencyInjection;
 using GamesListOperator;
 using DataBaseOperator;
+using DataBaseOperator.Entities;
 using Network;
 using Microsoft.Extensions.Hosting;
 

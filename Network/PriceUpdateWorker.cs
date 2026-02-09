@@ -1,5 +1,6 @@
 using Microsoft.Extensions.Hosting;
 using DataBaseOperator;
+using DataBaseOperator.Entities;
 using Microsoft.Extensions.Logging;
 namespace Network;
 
