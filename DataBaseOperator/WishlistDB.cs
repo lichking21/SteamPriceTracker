@@ -1,14 +1,17 @@
 using DataBaseOperator.Entities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 
 public class WishlistDB
 {
     private readonly ApplicationContext _context;
-    public WishlistDB(ApplicationContext context)
+    private readonly ILogger<WishlistDB> _logger;
+    public WishlistDB(ApplicationContext context, ILogger<WishlistDB> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     public async Task<List<int>> GetIDs()
@@ -27,8 +30,6 @@ public class WishlistDB
             existingItem.Price = item.Price;
             existingItem.Discount = item.Discount;
             existingItem.LastUpdate = DateTime.Now;
-
-            await _context.SaveChangesAsync();
         }
     }
 
@@ -44,11 +45,11 @@ public class WishlistDB
             _context.wishlist.Add(item);
 
             await _context.SaveChangesAsync();
-            Console.WriteLine($"(DEBUG) {item.Title} was added to wishlist");
+            _logger.LogInformation($"(LOG) >> {item.Title} was added to wishlist");
         }
         else
         {
-            Console.WriteLine($"(WARNING) {item.Title} already exists in wishlist");
+            _logger.LogWarning($"(WARN) >> {item.Title} already exists in wishlist");
         }
     }
 
@@ -58,11 +59,11 @@ public class WishlistDB
 
         if (rows > 0)
         {
-            Console.WriteLine($"(DEBUG) {title} was deleted from wishlist");
+            _logger.LogInformation($"(LOG) >> {title} was deleted from wishlist");
         }
         else
         {
-            Console.WriteLine($"(WARNING) {title} wasn't found in wishlist");
+            _logger.LogWarning($"(WARN) >> {title} wasn't found in wishlist");
         }
     }
 
