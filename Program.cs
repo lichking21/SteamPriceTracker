@@ -21,7 +21,7 @@ class Program
 
         if (Console.IsInputRedirected)
         {
-            Console.WriteLine("(LOG) >>> No interactive input detected. Running background services only.");
+            Console.WriteLine("(LOG) >> No interactive input detected. Running background services only.");
             await Task.Delay(Timeout.Infinite);
             return;
         }

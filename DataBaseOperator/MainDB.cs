@@ -1,12 +1,12 @@
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using GamesListOperator;
+using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 public class MainDB : Database
 {
-    public MainDB(IConfiguration configuration) : base(configuration){}
-
+    public MainDB(IConfiguration configuration, ILogger<MainDB> logger) : base(configuration, logger){}
 
     /// <summary>
     /// Imports games list into DataBase
@@ -15,7 +15,7 @@ public class MainDB : Database
     {
         if (gamesList == null || gamesList.Count == 0)
         {
-            Console.WriteLine("(ERROR) GamesList is empty");
+            _logger.LogError("(ERR) >> GamesList is empty");
             return;
         }
 
@@ -29,7 +29,7 @@ public class MainDB : Database
 
             if (exists)
             {
-                Console.WriteLine("(DEBUG) Data is up to date");
+                _logger.LogInformation("(LOG) >> Data is up to date");
                 return;
             }
         }
@@ -60,12 +60,12 @@ public class MainDB : Database
                 }
 
                 await transaction.CommitAsync();
-                Console.WriteLine($"(DEBUG) {gamesList.Count} games were imported to DB.");
+                _logger.LogInformation($"(LOG) >> {gamesList.Count} games were imported to DB.");
             }
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                Console.WriteLine($"(ERROR) Failed to import data to MainDB: {ex.Message}");
+                _logger.LogInformation($"(LOG) >> Failed to import data to MainDB: {ex.Message}");
                 throw;
             }
         }
@@ -82,7 +82,7 @@ public class MainDB : Database
 
         if (string.IsNullOrEmpty(title))
         {
-            Console.WriteLine("(ERROR) Title value can't be empty or null");
+            _logger.LogError("(ERR) >> Title value can't be empty or null");
             return result;   
         }
 
@@ -109,7 +109,7 @@ public class MainDB : Database
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"(ERROR) Title search failed {title}: {ex}");
+            _logger.LogError($"(ERR) Title search failed {title}: {ex}");
         }
 
         return result;
@@ -123,7 +123,7 @@ public class MainDB : Database
         int id = 0;
         if (string.IsNullOrEmpty(title))
         {
-            Console.WriteLine("(ERROR) Title can't be null or empty");
+            _logger.LogError("(ERR) >> Title can't be null or empty");
             return id;
         }
 
@@ -149,7 +149,7 @@ public class MainDB : Database
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"(ERROR) ID search failed: {ex}");
+            _logger.LogError($"(ERR) >> ID search failed: {ex}");
         }
 
         return id;

@@ -1,12 +1,13 @@
 using Microsoft.Extensions.Configuration;
 using Npgsql;
 using DataBaseOperator.Entities;
+using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 
 public class WishlistDB : Database
 {
-    public WishlistDB(IConfiguration configuration) : base(configuration) {}
+    public WishlistDB(IConfiguration configuration, ILogger<WishlistDB> logger) : base(configuration, logger) {}
 
     public async Task<List<int>> GetIDs()
     {
@@ -29,7 +30,7 @@ public class WishlistDB : Database
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"(ERROR) Failed to get IDs from wishlist: {ex}");
+                    _logger.LogError($"(ERR) >> Failed to get IDs from wishlist: {ex}");
                 }
             }
 
@@ -57,7 +58,7 @@ public class WishlistDB : Database
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"Failed to write data to WishlistDB: {ex}");
+                    _logger.LogError($"(ERR) >> Failed to write data to WishlistDB: {ex}");
                 }
 
                 await cmd.ExecuteNonQueryAsync();
@@ -85,13 +86,13 @@ public class WishlistDB : Database
                     cmd.Parameters.AddWithValue("@t", item.Title ?? "UNKNOWN");
 
                     await cmd.ExecuteNonQueryAsync();
-                    Console.WriteLine($"(DEBUG) {item.Title} was added to WishlistDB");
+                    _logger.LogInformation($"(LOG) >> {item.Title} was added to WishlistDB");
                 }
 
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"(ERROR)Failed to add {item.Title} into WishlistDB: {ex}");
+                _logger.LogError($"(ERR) >> Failed to add {item.Title} into WishlistDB: {ex}");
             }
         }
     }
@@ -100,7 +101,7 @@ public class WishlistDB : Database
     {
         if (string.IsNullOrEmpty(title))
         {
-            Console.WriteLine("(WARNING) Title can't be empty");
+            _logger.LogWarning("(WARN) >> Title can't be empty");
         }
 
         var sql = "DELETE FROM public.wishlist WHRE title=@searchTitle LIMIT 1";
@@ -117,13 +118,13 @@ public class WishlistDB : Database
 
                     var rows = await cmd.ExecuteNonQueryAsync();
                     if (rows > 0) 
-                        Console.WriteLine($"(DEBUG) {title} was removed from wishlist");
+                        _logger.LogInformation($"(LOG) >> {title} was removed from wishlist");
                     else 
-                        Console.WriteLine($"(WARNING) {title} wasn't found in wishlist");
+                        _logger.LogInformation($"(LOG) >> {title} wasn't found in wishlist");
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine($"(ERROR) Failed to remove {title} from wishlist: {ex}");
+                    _logger.LogInformation($"(LOG) >> Failed to remove {title} from wishlist: {ex}");
                 }
             }
         }

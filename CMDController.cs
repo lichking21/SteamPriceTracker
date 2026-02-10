@@ -1,12 +1,17 @@
-using System.Threading.Tasks;
-using Microsoft.Extensions.FileSystemGlobbing;
 using DataBaseOperator;
+using Microsoft.Extensions.Logging;
 
 /// TODO: 
 /// class will be changed into TgBotController
 /// input from cmd will be replaced by user input from telegram bot
-public class CMD()
+public class CMD
 {
+    private readonly ILogger<CMD> _logger;
+    public CMD(ILogger<CMD> logger)
+    {
+        _logger = logger;
+    }
+
     /// <summary>
     /// Reads user input from CMD
     /// </summary>
@@ -17,7 +22,7 @@ public class CMD()
 
         while (string.IsNullOrEmpty(userInput))
         {
-            Console.WriteLine("(WARNING) This field can't be empty or null");
+            _logger.LogWarning("(WARN) >> This field can't be empty or null");
             userInput = Console.ReadLine();
         }
 
@@ -57,13 +62,13 @@ public class CMD()
         
         if (exactMatch != null)
         {
-            Console.WriteLine($"(DEBUG) Exact match: {exactMatch}");
+            _logger.LogInformation($"(LOG) >> Exact match: {exactMatch}");
             return exactMatch;
         }
 
         if (count == 0)
         {
-            Console.WriteLine($"(WARNING) There is no game with title: {title}");
+            _logger.LogInformation($"(LOG) >> There is no game with title: {title}");
         }
         else if (count == 1)
         {
@@ -73,7 +78,7 @@ public class CMD()
         else if (count > 1)
         {
             ShowSimilar(matches);
-            Console.WriteLine("(WARNING) Specify your request: ");
+            _logger.LogWarning("(WARN) >> Specify your request: ");
         }
     
         return resultTitle;

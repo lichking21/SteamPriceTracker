@@ -1,12 +1,19 @@
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 
 namespace Network;
 
 public class Price
 {
     private static readonly HttpClient _client = new HttpClient();
+    private readonly ILogger<Price> _logger;
     private string? _region;
     public bool IsConfigured = false;
+
+    public Price(ILogger<Price> logger)
+    {
+        _logger = logger;
+    }
 
     /// <summary>
     /// Sets store prices according to users region
@@ -17,6 +24,9 @@ public class Price
         IsConfigured = true;
     } 
 
+    /// <summary>
+    /// Returns game price by its ID
+    /// </summary>
     public async Task<(string finalPrice, int discount)> GetPrice(int gameId)
     {
         string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={_region}&l=english";
@@ -43,8 +53,8 @@ public class Price
                         
                         if (price.DiscountPercent != 0)
                         {
-                            Console.WriteLine($"Discount is: {price.DiscountPercent}%");
-                            Console.WriteLine($"Initial price is: {price.InitialPrice}");
+                            _logger.LogInformation($"(LOG) >> Discount is: {price.DiscountPercent}%");
+                            _logger.LogInformation($"(LOG) >> Initial price is: {price.InitialPrice}");
                             return (price.FinalPrice, price.DiscountPercent);
                         }
                         else
@@ -57,7 +67,7 @@ public class Price
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"(ERROR) Couldn't update price for {gameId}: {ex}");
+            _logger.LogInformation($"(ERR) >> Couldn't update price for {gameId}: {ex}");
         }
 
         return ("N/A", 0);   

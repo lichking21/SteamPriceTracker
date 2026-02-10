@@ -22,7 +22,7 @@ public class PriceUpdateWorker : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken _stopToken)
     {
-        _logger.LogInformation("(LOG) >>> Background price updating started");
+        _logger.LogInformation("(LOG) >> Background price updating started");
 
         while (!_stopToken.IsCancellationRequested)
         {
@@ -30,7 +30,7 @@ public class PriceUpdateWorker : BackgroundService
             {
                 var listIds = await _wishlistDB.GetIDs();
                 int count = listIds.Count;
-                _logger.LogInformation($"(LOG) >>> Found {count} items in wishlist.");
+                _logger.LogInformation($"(LOG) >> Found {count} items in wishlist.");
 
                 if (count == 0)
                 {
@@ -48,13 +48,13 @@ public class PriceUpdateWorker : BackgroundService
                         WishlistItem item = new WishlistItem(id, data.finalPrice, data.discount);
                         await _wishlistDB.UpdateWishlistItem(item);
 
-                        _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
+                        _logger.LogInformation($"(LOG) >> Game {id} updated {data.finalPrice} (-{data.discount}%)");
                     }
 
                     await Task.Delay(_requestSendDelay, _stopToken);
                 }
 
-                _logger.LogInformation($"(LOG) >>> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
+                _logger.LogInformation($"(LOG) >> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
 
                 await Task.Delay(_pricesUpdateDelay, _stopToken);
             }
@@ -63,7 +63,7 @@ public class PriceUpdateWorker : BackgroundService
                 if (_stopToken.IsCancellationRequested)
                     throw;
 
-                _logger.LogError($"(LOG_ERR) >>> Error in background updating: {ex}");
+                _logger.LogError($"(ERR) >> Error in background updating: {ex}");
                 await Task.Delay(TimeSpan.FromMinutes(1), _stopToken);
             }
         } 
