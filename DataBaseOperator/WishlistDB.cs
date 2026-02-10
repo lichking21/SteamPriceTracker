@@ -55,7 +55,10 @@ public class WishlistDB
 
     public async Task RemoveWishlistItem(string title)
     {
-        int rows = await _context.wishlist.Where(w => w.Title == title).ExecuteDeleteAsync();
+        int rows = await _context.wishlist
+            .Where(w => 
+                w.Title != null && EF.Functions.ILike(w.Title, $"%{title}%"))
+            .ExecuteDeleteAsync();
 
         if (rows > 0)
         {

@@ -40,9 +40,9 @@ class Program
             (string gamePrice, int discount) = await price.GetPrice(gameId);
             await wishlistDB.AddWishlistItem(new WishlistItem(gameId, gamePrice, discount, title));
 
-            await wishlistDB.RemoveWishlistItem("the witcher 3");
-            await wishlistDB.RemoveWishlistItem("doom eternal");
-            await wishlistDB.RemoveWishlistItem("red dead redemption 2");
+            await wishlistDB.RemoveWishlistItem("The Witcher 3: Wild Hunt");
+            await wishlistDB.RemoveWishlistItem("DOOM Eternal");
+            await wishlistDB.RemoveWishlistItem("Red Dead Redemption 2");
         }
     }
 }
