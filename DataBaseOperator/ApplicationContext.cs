@@ -5,6 +5,6 @@ public class ApplicationContext : DbContext
 {
     public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) {}
 
-    DbSet<GameItem> games {get;set;}
-    DbSet<WishlistItem> wishlist {get;set;}
+    public DbSet<GameItem> games {get;set;}
+    public DbSet<WishlistItem> wishlist {get;set;}
 }

@@ -1,21 +1,23 @@
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using DataBaseOperator;
 using DataBaseOperator.Entities;
-using Microsoft.Extensions.Logging;
+
 namespace Network;
 
 public class PriceUpdateWorker : BackgroundService
 {
-    private readonly WishlistDB _wishlistDB;
+    private readonly IServiceScopeFactory _scopeFactory;
     private readonly Price _price;
     private readonly ILogger<PriceUpdateWorker> _logger;
 
     private readonly TimeSpan _requestSendDelay = TimeSpan.FromSeconds(60);
     private readonly TimeSpan _pricesUpdateDelay = TimeSpan.FromHours(2);
 
-    public PriceUpdateWorker(WishlistDB wishlistDB, Price price, ILogger<PriceUpdateWorker> logger)
+    public PriceUpdateWorker(IServiceScopeFactory scopeFactory, Price price, ILogger<PriceUpdateWorker> logger)
     {
-        _wishlistDB = wishlistDB;
+        _scopeFactory = scopeFactory;
         _price = price;
         _logger = logger;
     }
@@ -28,35 +30,41 @@ public class PriceUpdateWorker : BackgroundService
         {
             try
             {
-                var listIds = await _wishlistDB.GetIDs();
-                int count = listIds.Count;
-                _logger.LogInformation($"(LOG) >>> Found {count} items in wishlist.");
-
-                if (count == 0)
+                using (var scope = _scopeFactory.CreateScope())
                 {
-                    await Task.Delay(TimeSpan.FromMinutes(5), _stopToken);
-                    continue;
-                }
+                    var db = scope.ServiceProvider.GetRequiredService<WishlistDB>();
 
-                foreach (var id in listIds)
-                {
-                    if (_stopToken.IsCancellationRequested) break;
+                    var listIds = await db.GetIDs();
+                    int count = listIds.Count;
+                    _logger.LogInformation($"(LOG) >>> Found {count} items in wishlist.");
 
-                    var data = await _price.GetPrice(id);
-                    if (data.finalPrice != "N/A")
+                    if (count == 0)
                     {
-                        WishlistItem item = new WishlistItem(id, data.finalPrice, data.discount);
-                        await _wishlistDB.UpdateWishlistItem(item);
-
-                        _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
+                        await Task.Delay(TimeSpan.FromMinutes(5), _stopToken);
+                        continue;
                     }
 
-                    await Task.Delay(_requestSendDelay, _stopToken);
+                    foreach (var id in listIds)
+                    {
+                        if (_stopToken.IsCancellationRequested) break;
+
+                        var data = await _price.GetPrice(id);
+                        if (data.finalPrice != "N/A")
+                        {
+                            WishlistItem item = new WishlistItem(id, data.finalPrice, data.discount);
+                            
+                            await db.UpdateWishlistItem(item);
+
+                            _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
+                        }
+
+                        await Task.Delay(_requestSendDelay, _stopToken);
+                    }
+
+                    _logger.LogInformation($"(LOG) >>> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
+
+                    await Task.Delay(_pricesUpdateDelay, _stopToken);
                 }
-
-                _logger.LogInformation($"(LOG) >>> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
-
-                await Task.Delay(_pricesUpdateDelay, _stopToken);
             }
             catch (Exception ex)
             {

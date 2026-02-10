@@ -1,12 +1,11 @@
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Configuration;
-using DataBaseOperator;
 using Network;
 using GamesListOperator;
 using Bot;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
+using DataBaseOperator;
 
 public static class Bootstrapper
 {
@@ -29,6 +28,7 @@ public static class Bootstrapper
         services.AddDbContext<ApplicationContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
         );
+        services.AddScoped<WishlistDB>();
 
         services.AddSingleton<CMD>();
         services.AddSingleton<Price>();

@@ -1,4 +1,4 @@
-﻿﻿using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 using GamesListOperator;
 using DataBaseOperator;
 using DataBaseOperator.Entities;
@@ -11,30 +11,38 @@ class Program
     {
         using IHost host = Bootstrapper.BuildApp();
         await host.StartAsync();
-        var services = host.Services;
 
-        var mainDB = host.Services.GetRequiredService<MainDB>();
-        var cmd = host.Services.GetRequiredService<CMD>();
-        var price = host.Services.GetRequiredService<Price>();
-        var getList = host.Services.GetRequiredService<GamesListController>();
-        var wishlistDB = host.Services.GetRequiredService<WishlistDB>();
-
-        if (Console.IsInputRedirected)
+        using (var scope = host.Services.CreateScope())
         {
-            Console.WriteLine("(LOG) >>> No interactive input detected. Running background services only.");
-            await Task.Delay(Timeout.Infinite);
-            return;
+            var services = scope.ServiceProvider;
+
+            var mainDB = services.GetRequiredService<MainDB>();
+            var cmd = services.GetRequiredService<CMD>();
+            var price = services.GetRequiredService<Price>();
+            var getList = services.GetRequiredService<GamesListController>();
+            var wishlistDB = services.GetRequiredService<WishlistDB>(); 
+
+            if (Console.IsInputRedirected)
+            {
+                Console.WriteLine("(LOG) >>> No interactive input detected. Running background services only.");
+                await Task.Delay(Timeout.Infinite);
+                return;
+            }
+
+            string region = "kg";
+            string searchTitle = "Mortal Sin";
+
+            await mainDB.ImportDataToDB(await getList.ParsedJson());
+
+            price.SetUserPrice(region);
+            string title = await cmd.ProccesSelection(mainDB, searchTitle);
+            int gameId = await mainDB.GetGameID(title);
+            (string gamePrice, int discount) = await price.GetPrice(gameId);
+            await wishlistDB.AddWishlistItem(new WishlistItem(gameId, gamePrice, discount, title));
+
+            await wishlistDB.RemoveWishlistItem("the witcher 3");
+            await wishlistDB.RemoveWishlistItem("doom eternal");
+            await wishlistDB.RemoveWishlistItem("red dead redemption 2");
         }
-
-        string region = "kg";
-        string searchTitle = "Mortal Sin";
-
-        await mainDB.ImportDataToDB(await getList.ParsedJson());
-
-        price.SetUserPrice(region);
-        string title = await cmd.ProccesSelection(mainDB, searchTitle);
-        int gameId = await mainDB.GetGameID(title);
-        (string gamePrice, int discount) = await price.GetPrice(gameId);
-        await wishlistDB.AddWishListItem(new WishlistItem(gameId, gamePrice, discount, title));
     }
 }

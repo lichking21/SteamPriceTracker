@@ -1,133 +1,69 @@
-using Microsoft.Extensions.Configuration;
-using Npgsql;
 using DataBaseOperator.Entities;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseOperator;
 
-public class WishlistDB : Database
+public class WishlistDB
 {
-    public WishlistDB(IConfiguration configuration) : base(configuration) {}
+    private readonly ApplicationContext _context;
+    public WishlistDB(ApplicationContext context)
+    {
+        _context = context;
+    }
 
     public async Task<List<int>> GetIDs()
     {
-        List<int> ids = new List<int>();
+        List<int> ids = await _context.wishlist.Select(w => w.GameId).ToListAsync();
 
-        var sql = "SELECT game_id FROM public.wishlist";
-        using (var conn = GetConnection())
-        {
-            await conn.OpenAsync();
-
-            using (var commnad = new NpgsqlCommand(sql, conn))
-            {
-                try
-                {
-                    using (var reader = await commnad.ExecuteReaderAsync())
-                    {
-                        while(await reader.ReadAsync())
-                            ids.Add(reader.GetInt32(0));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"(ERROR) Failed to get IDs from wishlist: {ex}");
-                }
-            }
-
-            return ids;
-        }
-    }
+        return ids;
+    } 
 
     public async Task UpdateWishlistItem(WishlistItem item)
     {
-        var sql = @"UPDATE public.wishlist
-                    SET price=@updPrice, discount=@updDiscount, last_update=NOW()
-                    WHERE game_id=@id";
+        var existingItem = await _context.wishlist.FindAsync(item.GameId);
 
-        using (var conn = GetConnection())
+        if (existingItem != null)
         {
-            await conn.OpenAsync();
+            existingItem.Price = item.Price;
+            existingItem.Discount = item.Discount;
+            existingItem.LastUpdate = DateTime.Now;
 
-            using (var cmd = new NpgsqlCommand(sql, conn))
-            {
-                try
-                {
-                    cmd.Parameters.AddWithValue("@updPrice", item.Price);
-                    cmd.Parameters.AddWithValue("@updDiscount", item.Discount);
-                    cmd.Parameters.AddWithValue("@id", item.GameId);
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Failed to write data to WishlistDB: {ex}");
-                }
-
-                await cmd.ExecuteNonQueryAsync();
-            }
+            await _context.SaveChangesAsync();
         }
     }
 
-    public async Task AddWishListItem(WishlistItem item)
+    public async Task AddWishlistItem(WishlistItem item)
     {
-        var sql = @"INSERT INTO public.wishlist(game_id, price, discount, last_update, title)
-                    VALUES (@i, @p, @d, NOW(), @t)
-                    ON CONFLICT (game_id) DO NOTHING";
+        bool isExists = await _context.wishlist.AnyAsync(w => item.GameId == w.GameId);
 
-        using (var conn = GetConnection())
+        if (isExists == false)
         {
-            await conn.OpenAsync();
+            item.LastUpdate = DateTime.Now;
+            item.Title = (item.Title == null) ? "UNKNOWN" : item.Title;
+            
+            _context.wishlist.Add(item);
 
-            try
-            {
-                using (var cmd = new NpgsqlCommand(sql, conn))
-                {
-                    cmd.Parameters.AddWithValue("@i", item.GameId);
-                    cmd.Parameters.AddWithValue("@p", item.Price);
-                    cmd.Parameters.AddWithValue("@d", item.Discount);
-                    cmd.Parameters.AddWithValue("@t", item.Title ?? "UNKNOWN");
-
-                    await cmd.ExecuteNonQueryAsync();
-                    Console.WriteLine($"(DEBUG) {item.Title} was added to WishlistDB");
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"(ERROR)Failed to add {item.Title} into WishlistDB: {ex}");
-            }
+            await _context.SaveChangesAsync();
+            Console.WriteLine($"(DEBUG) {item.Title} was added to wishlist");
+        }
+        else
+        {
+            Console.WriteLine($"(WARNING) {item.Title} already exists in wishlist");
         }
     }
 
-    public async Task RemoveWishListItem(string title)
+    public async Task RemoveWishlistItem(string title)
     {
-        if (string.IsNullOrEmpty(title))
+        int rows = await _context.wishlist.Where(w => w.Title == title).ExecuteDeleteAsync();
+
+        if (rows > 0)
         {
-            Console.WriteLine("(WARNING) Title can't be empty");
+            Console.WriteLine($"(DEBUG) {title} was deleted from wishlist");
         }
-
-        var sql = "DELETE FROM public.wishlist WHRE title=@searchTitle LIMIT 1";
-
-        using (var conn = GetConnection())
+        else
         {
-            await conn.OpenAsync();
-
-            using (var cmd = new NpgsqlCommand(sql, conn))
-            {
-                try
-                {
-                    cmd.Parameters.AddWithValue("@searchTitle", title);
-
-                    var rows = await cmd.ExecuteNonQueryAsync();
-                    if (rows > 0) 
-                        Console.WriteLine($"(DEBUG) {title} was removed from wishlist");
-                    else 
-                        Console.WriteLine($"(WARNING) {title} wasn't found in wishlist");
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"(ERROR) Failed to remove {title} from wishlist: {ex}");
-                }
-            }
+            Console.WriteLine($"(WARNING) {title} wasn't found in wishlist");
         }
     }
 
-    
 }
