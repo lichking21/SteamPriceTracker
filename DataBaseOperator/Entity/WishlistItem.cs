@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataBaseOperator.Entities;
 
-public class WishlistItem
+public class TrackedGamesItem
 {
     [Key]
     [Column("game_id")]
@@ -21,9 +21,9 @@ public class WishlistItem
     [Column("last_update")]
     public DateTime LastUpdate {get;set;} = DateTime.UtcNow;
 
-    public WishlistItem() {}
+    public TrackedGamesItem() {}
 
-    public WishlistItem(int gameId, string price, int discount, string? title = null)
+    public TrackedGamesItem(int gameId, string price, int discount, string? title = null)
     {
         GameId = gameId;
         Price = price;

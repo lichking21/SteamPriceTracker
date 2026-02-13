@@ -29,6 +29,7 @@ public static class Bootstrapper
             options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
         );
         services.AddScoped<WishlistDB>();
+        services.AddScoped<UserDB>();
     
         services.AddSingleton<MainDB>();
         services.AddSingleton<CMD>();

@@ -6,13 +6,13 @@ public class ApplicationContext : DbContext
     public ApplicationContext(DbContextOptions<ApplicationContext> options) : base(options) {}
 
     public DbSet<GameItem> games {get;set;}
-    public DbSet<WishlistItem> wishlist {get;set;}
+    public DbSet<TrackedGamesItem> trackedGames {get;set;}
     public DbSet<UserItem> users {get;set;}
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<GameItem>().ToTable("games", t => t.ExcludeFromMigrations());
-        modelBuilder.Entity<WishlistItem>().ToTable("wishlist", t => t.ExcludeFromMigrations());
+        modelBuilder.Entity<TrackedGamesItem>().ToTable("tracked_games", t => t.ExcludeFromMigrations());
 
         base.OnModelCreating(modelBuilder);
     }

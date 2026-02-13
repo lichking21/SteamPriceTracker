@@ -24,7 +24,7 @@ public class EchoBotWorker : BackgroundService
         string? token = _configuration["Telegram:BotToken"];
         if (string.IsNullOrWhiteSpace(token))
         {
-            _logger.LogError("(LOG_ERR) >>> Telegram bot token missing. Set Telegram:BotToken in appsettings.json");
+            _logger.LogError("(ERR) >> Telegram bot token missing. Set Telegram:BotToken in appsettings.json");
             return;
         }
 
@@ -35,7 +35,7 @@ public class EchoBotWorker : BackgroundService
             AllowedUpdates = new[] { UpdateType.Message }
         };
 
-        _logger.LogInformation("(LOG) >>> Echo bot started polling");
+        _logger.LogInformation("(LOG) >> Echo bot started polling");
 
         botClient.StartReceiving(
             updateHandler: HandleUpdateAsync,
@@ -67,7 +67,7 @@ public class EchoBotWorker : BackgroundService
         }
 
         var chatId = update.Message.Chat.Id;
-        _logger.LogInformation($"(LOG) >>> Echoing message from chat {chatId}");
+        _logger.LogInformation($"(LOG) >> Echoing message from chat {chatId}");
 
         await botClient.SendMessage(
             chatId: chatId,
@@ -77,7 +77,7 @@ public class EchoBotWorker : BackgroundService
 
     private Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
-        _logger.LogError(exception, "(LOG_ERR) >>> Telegram polling error");
+        _logger.LogError(exception, "(ERR) >> Telegram polling error");
         return Task.CompletedTask;
     }
 }

@@ -20,7 +20,8 @@ class Program
             var cmd = services.GetRequiredService<CMD>();
             var price = services.GetRequiredService<Price>();
             var getList = services.GetRequiredService<GamesListController>();
-            var wishlistDB = services.GetRequiredService<WishlistDB>(); 
+            var trackedGamesDB = services.GetRequiredService<TrackedGamesDB>();
+            var userDB = services.GetRequiredService<UserDB>();
 
             if (Console.IsInputRedirected)
             {
@@ -38,11 +39,11 @@ class Program
             string title = await cmd.ProccesSelection(mainDB, searchTitle);
             int gameId = await mainDB.GetGameID(title);
             (string gamePrice, int discount) = await price.GetPrice(gameId);
-            await wishlistDB.AddWishlistItem(new WishlistItem(gameId, gamePrice, discount, title));
+            
+            await userDB.AddUserItem(new UserItem("Eban"));
 
-            await wishlistDB.RemoveWishlistItem("The Witcher 3: Wild Hunt");
-            await wishlistDB.RemoveWishlistItem("DOOM Eternal");
-            await wishlistDB.RemoveWishlistItem("Red Dead Redemption 2");
+            await trackedGamesDB.AddTrackingGame(new TrackedGamesItem(gameId, gamePrice, discount, title));
+            await trackedGamesDB.RemoveTrackingGame("The Witcher 3: Wild Hunt");
         }
     }
 }

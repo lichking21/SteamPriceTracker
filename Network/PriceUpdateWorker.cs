@@ -32,11 +32,11 @@ public class PriceUpdateWorker : BackgroundService
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    var db = scope.ServiceProvider.GetRequiredService<WishlistDB>();
+                    var db = scope.ServiceProvider.GetRequiredService<TrackedGamesDB>();
 
                     var listIds = await db.GetIDs();
                     int count = listIds.Count;
-                    _logger.LogInformation($"(LOG) >>> Found {count} items in wishlist.");
+                    _logger.LogInformation($"(LOG) >>> Found {count} items in tracking_games.");
 
                     if (count == 0)
                     {
@@ -51,7 +51,7 @@ public class PriceUpdateWorker : BackgroundService
                         var data = await _price.GetPrice(id);
                         if (data.finalPrice != "N/A")
                         {
-                            WishlistItem item = new WishlistItem(id, data.finalPrice, data.discount);
+                            TrackedGamesItem item = new TrackedGamesItem(id, data.finalPrice, data.discount);
                             
                             await db.UpdateWishlistItem(item);
 
