@@ -28,7 +28,7 @@ public static class Bootstrapper
         services.AddDbContext<ApplicationContext>(
             options => options.UseNpgsql(configuration.GetConnectionString("DefaultConnection"))
         );
-        services.AddScoped<WishlistDB>();
+        services.AddScoped<TrackedGamesDB>();
         services.AddScoped<UserDB>();
     
         services.AddSingleton<MainDB>();
