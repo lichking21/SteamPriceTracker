@@ -22,6 +22,7 @@ class Program
             var getList = services.GetRequiredService<GamesListController>();
             var trackedGamesDB = services.GetRequiredService<TrackedGamesDB>();
             var userDB = services.GetRequiredService<UserDB>();
+            var dbSerivce = services.GetRequiredService<DBService>();
 
             if (Console.IsInputRedirected)
             {
@@ -31,19 +32,22 @@ class Program
             }
 
             string region = "kg";
-            string searchTitle = "Mortal Sin";
+            string gameTitle = "Mortal Kombat X";
+            string gameTitle2 = "Mortal Kombat 1";
 
             await mainDB.ImportDataToDB(await getList.ParsedJson());
 
             price.SetUserPrice(region);
-            string title = await cmd.ProccesSelection(mainDB, searchTitle);
+            string title = await cmd.ProccesSelection(mainDB, gameTitle);
             int gameId = await mainDB.GetGameID(title);
             (string gamePrice, int discount) = await price.GetPrice(gameId);
             
-            await userDB.AddUserItem(new UserItem("Eban"));
+            await userDB.AddUserItem(new UserItem("Sadyr"));
 
             await trackedGamesDB.AddTrackingGame(new TrackedGamesItem(gameId, gamePrice, discount, title));
-            await trackedGamesDB.RemoveTrackingGame("The Witcher 3: Wild Hunt");
+
+            await dbSerivce.AddToUserWishlist(await userDB.GetUserId("Sadyr"), gameTitle);
+            await dbSerivce.AddToUserWishlist(await userDB.GetUserId("Sadyr"), gameTitle2);
         }
     }
 }

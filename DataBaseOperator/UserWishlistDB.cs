@@ -15,6 +15,9 @@ public class UserWishlistDB
         _context = context;
     }
 
+    /// <summary>
+    /// Lnks tracking game's IDs with user's ID  
+    /// </summary>
     public async Task<bool> AddLink(long userId, int gameId)
     {
         bool exists = await _context.usersWishlist.AnyAsync(uw => 

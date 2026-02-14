@@ -34,7 +34,7 @@ public class UserDB
 
     public async Task AddUserItem(UserItem item)
     {
-        bool ifExists = await _context.users.AnyAsync(u => u.ID ==item.ID);
+        bool ifExists = await _context.users.AnyAsync(u => u.Name == item.Name || u.ID == item.ID);
 
         if (ifExists == false)
         {

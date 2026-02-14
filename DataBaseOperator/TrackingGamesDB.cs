@@ -29,7 +29,7 @@ public class TrackedGamesDB
         {
             existingItem.Price = item.Price;
             existingItem.Discount = item.Discount;
-            existingItem.LastUpdate = DateTime.Now;
+            existingItem.LastUpdate = DateTime.UtcNow;
         }
     }
 
@@ -39,7 +39,7 @@ public class TrackedGamesDB
 
         if (isExists == false)
         {
-            item.LastUpdate = DateTime.Now;
+            item.LastUpdate = DateTime.UtcNow;
             item.Title = (item.Title == null) ? "UNKNOWN" : item.Title;
             
             _context.trackedGames.Add(item);
