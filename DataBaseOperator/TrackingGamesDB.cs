@@ -21,7 +21,7 @@ public class TrackedGamesDB
         return ids;
     } 
 
-    public async Task UpdateWishlistItem(TrackedGamesItem item)
+    public async Task UpdateTrackItem(TrackedGamesItem item)
     {
         var existingItem = await _context.trackedGames.FindAsync(item.GameId);
 

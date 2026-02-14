@@ -53,7 +53,7 @@ public class PriceUpdateWorker : BackgroundService
                         {
                             TrackedGamesItem item = new TrackedGamesItem(id, data.finalPrice, data.discount);
                             
-                            await db.UpdateWishlistItem(item);
+                            await db.UpdateTrackItem(item);
 
                             _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
                         }
