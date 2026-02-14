@@ -7,6 +7,7 @@ namespace DataBaseOperator.Entities;
 public class UserItem
 {
     [Key]
+    [DatabaseGenerated(DatabaseGeneratedOption.None)]
     [Column("ID")]
     public long ID {get;set;}
 
@@ -15,8 +16,9 @@ public class UserItem
 
     public UserItem() {}
 
-    public UserItem(string name)
+    public UserItem(string name, long id)
     {
         Name = name;
+        ID = id;
     }
 }
