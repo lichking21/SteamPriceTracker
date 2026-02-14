@@ -4,6 +4,9 @@ using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 
+/// <summary>
+/// Provides access to all user wishlist data.
+/// </summary>
 public class TrackedGamesDB
 {
     private readonly ApplicationContext _context;
@@ -14,6 +17,9 @@ public class TrackedGamesDB
         _logger = logger;
     }
 
+    /// <summary>
+    /// Use this method to get IDs of all games from tracking list
+    /// </summary>
     public async Task<List<int>> GetIDs()
     {
         List<int> ids = await _context.trackedGames.Select(w => w.GameId).ToListAsync();
@@ -21,6 +27,9 @@ public class TrackedGamesDB
         return ids;
     } 
 
+    /// <summary>
+    /// Use this method to update information about tracking game
+    /// </summary>
     public async Task UpdateTrackItem(TrackedGamesItem item)
     {
         var existingItem = await _context.trackedGames.FindAsync(item.GameId);
@@ -33,6 +42,9 @@ public class TrackedGamesDB
         }
     }
 
+    /// <summary>
+    /// Use this method to add game to tracking list 
+    /// </summary>
     public async Task AddTrackingGame(TrackedGamesItem item)
     {
         bool isExists = await _context.trackedGames.AnyAsync(w => item.GameId == w.GameId);
@@ -53,6 +65,9 @@ public class TrackedGamesDB
         }
     }
 
+    /// <summary>
+    /// Use this method to remove game from tracking list
+    /// </summary>
     public async Task RemoveTrackingGame(string title)
     {
         int rows = await _context.trackedGames
@@ -70,4 +85,11 @@ public class TrackedGamesDB
         }
     }
 
+    /// <summary>
+    /// Us this method to check if game is already in tracking list
+    /// </summary>
+    public async Task<bool> IsTracking(int gameId)
+    {
+        return await _context.trackedGames.AnyAsync(t => t.GameId == gameId);
+    }
 }
