@@ -8,7 +8,7 @@ public class UserItem
 {
     [Key]
     [Column("ID")]
-    public int ID {get;set;}
+    public long ID {get;set;}
 
     [Column("Name")]
     public string Name {get;set;} = "UNKNOWN";

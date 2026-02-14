@@ -20,9 +20,9 @@ public class UserDB
     /// Use it to get information about user id by his name
     /// </summary>
     /// <returns>Id as integer value type</returns>
-    public async Task<int> GetUserId(string name)
+    public async Task<long> GetUserId(string name)
     {
-        int id = await _context.users
+        long id = await _context.users
             .Where(u => u.Name != null && EF.Functions.ILike(u.Name, $"%{name}%"))
             .Select(user => user.ID)
             .FirstOrDefaultAsync();
