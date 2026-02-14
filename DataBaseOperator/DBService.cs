@@ -31,7 +31,7 @@ public class DBService
         int gameId = await _mainDB.GetGameID(gameTitle);
         if (gameId == 0)
         {
-            _logger.LogInformation($"(ERR) >> Game: {gameTitle} wasn't found");
+            _logger.LogError($"(ERR) >> Game: {gameTitle} wasn't found");
             return;
         }
 
@@ -50,6 +50,6 @@ public class DBService
         if (added)
             _logger.LogInformation($"(LOG) >> {gameTitle} was added to your wishlist");
         else
-            _logger.LogInformation($"(WARN) >> {gameTitle} is already in your wishlist");
+            _logger.LogWarning($"(WARN) >> {gameTitle} is already in your wishlist");
     }
 }
