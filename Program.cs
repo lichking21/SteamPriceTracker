@@ -4,6 +4,7 @@ using DataBaseOperator;
 using DataBaseOperator.Entities;
 using Network;
 using Microsoft.Extensions.Hosting;
+using Telegram.Bot.Types;
 
 class Program
 {
@@ -23,6 +24,7 @@ class Program
             var trackedGamesDB = services.GetRequiredService<TrackedGamesDB>();
             var userDB = services.GetRequiredService<UserDB>();
             var dbSerivce = services.GetRequiredService<DBService>();
+            var userWishlistDB = services.GetRequiredService<UserWishlistDB>();
 
             if (Console.IsInputRedirected)
             {
@@ -33,7 +35,6 @@ class Program
 
             string region = "kg";
             string gameTitle = "Mortal Kombat X";
-            string gameTitle2 = "Mortal Kombat 1";
 
             await mainDB.ImportDataToDB(await getList.ParsedJson());
 
@@ -41,13 +42,22 @@ class Program
             string title = await cmd.ProccesSelection(mainDB, gameTitle);
             int gameId = await mainDB.GetGameID(title);
             (string gamePrice, int discount) = await price.GetPrice(gameId);
+            var game = new TrackedGamesItem(gameId, gamePrice, discount, title);
             
-            await userDB.AddUserItem(new UserItem("Sadyr"));
+            await trackedGamesDB.AddTrackingGame(game);
 
-            await trackedGamesDB.AddTrackingGame(new TrackedGamesItem(gameId, gamePrice, discount, title));
+            string name = "Sadyr";
+            long userId = await userDB.GetUserId(name);
+            var user = new UserItem(name, userId);
 
-            await dbSerivce.AddToUserWishlist(await userDB.GetUserId("Sadyr"), gameTitle);
-            await dbSerivce.AddToUserWishlist(await userDB.GetUserId("Sadyr"), gameTitle2);
+            await userDB.AddUserItem(user);
+            await dbSerivce.AddToUserWishlist(userId, gameTitle);
+
+            Console.WriteLine($"User: {userId} games: ");
+            foreach(var g in await userWishlistDB.GetGamesFromWishlist(userId))
+            {
+                Console.WriteLine($" -{g}");
+            }
         }
     }
 }

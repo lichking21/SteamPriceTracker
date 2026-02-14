@@ -2,7 +2,6 @@ using DataBaseOperator.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Network;
-using Telegram.Bot.Types;
 
 namespace DataBaseOperator;
 
@@ -13,16 +12,14 @@ public class DBService
     private UserWishlistDB _userWishlistDB;
     private Price _price;
     private readonly ILogger<DBService> _logger;
-    private readonly ApplicationContext _context; 
 
     public DBService(MainDB mainDB, TrackedGamesDB trackedGamesDB, UserWishlistDB userWishlistDB, 
-                    ILogger<DBService> logger, ApplicationContext context, Price price)
+                    ILogger<DBService> logger, Price price)
     {
         _mainDB = mainDB;
         _trackedGamesDB = trackedGamesDB;
         _userWishlistDB = userWishlistDB;
         _logger = logger;
-        _context = context;
         _price = price;
     } 
 
@@ -35,7 +32,7 @@ public class DBService
             return;
         }
 
-        bool isTracked = await _context.trackedGames.AnyAsync(t => t.GameId == gameId);
+        bool isTracked = await _trackedGamesDB.IsTracking(gameId);
         if (isTracked == false)
         {
             (string finalPrice, int discount) = await _price.GetPrice(gameId);
