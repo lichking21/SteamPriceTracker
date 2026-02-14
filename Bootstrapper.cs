@@ -32,13 +32,13 @@ public static class Bootstrapper
         services.AddScoped<UserDB>();
         services.AddScoped<UserWishlistDB>();
         services.AddScoped<DBService>();
-    
+
         services.AddSingleton<MainDB>();
         services.AddSingleton<CMD>();
         services.AddSingleton<Price>();
         services.AddSingleton<GamesListController>();
 
         services.AddHostedService<PriceUpdateWorker>();
-        services.AddHostedService<EchoBotWorker>();
+        services.AddHostedService<TelegramBot>();
     }
 }
