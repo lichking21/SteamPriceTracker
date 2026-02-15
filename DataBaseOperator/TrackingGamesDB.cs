@@ -66,27 +66,24 @@ public class TrackedGamesDB
     }
 
     /// <summary>
-    /// Use this method to remove game from tracking list
+    /// Use this method to remove game from tracking list by ID
     /// </summary>
-    public async Task RemoveTrackingGame(string title)
+    public async Task RemoveTrackingGame(int gameId)
     {
-        int rows = await _context.trackedGames
-            .Where(w => 
-                w.Title != null && EF.Functions.ILike(w.Title, $"%{title}%"))
-            .ExecuteDeleteAsync();
+        int deletedRows = await _context.trackedGames.Where(tg => tg.GameId == gameId).ExecuteDeleteAsync();
 
-        if (rows > 0)
+        if (deletedRows > 0)
         {
-            _logger.LogInformation($"(LOG) >> {title} was deleted from tracking_games");
+            _logger.LogInformation($"(LOG) >> Game [{gameId}] was deleted from tracking_games");
         }
         else
         {
-            _logger.LogWarning($"(WARN) >> {title} wasn't found in tracking_games");
+            _logger.LogWarning($"(WARN) >> Game [{gameId}] wasn't found in tracking_games");
         }
     }
 
     /// <summary>
-    /// Us this method to check if game is already in tracking list
+    /// Use this method to check if game is already in tracking list
     /// </summary>
     public async Task<bool> IsTracking(int gameId)
     {
