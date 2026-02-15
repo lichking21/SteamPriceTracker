@@ -17,13 +17,13 @@ class Program
         {
             var services = scope.ServiceProvider;
 
+// CLASSES DECLARATIONS
             var mainDB = services.GetRequiredService<MainDB>();
-            var cmd = services.GetRequiredService<CMD>();
             var price = services.GetRequiredService<Price>();
             var getList = services.GetRequiredService<GamesListController>();
             var trackedGamesDB = services.GetRequiredService<TrackedGamesDB>();
             var userDB = services.GetRequiredService<UserDB>();
-            var dbSerivce = services.GetRequiredService<DBService>();
+            var userWishlistService = services.GetRequiredService<UserWishlistService>();
             var userWishlistDB = services.GetRequiredService<UserWishlistDB>();
 
             if (Console.IsInputRedirected)
@@ -33,25 +33,30 @@ class Program
                 return;
             }
 
+// SET UP
             string region = "kg";
             string gameTitle = "Mortal Kombat X";
 
             await mainDB.ImportDataToDB(await getList.ParsedJson());
 
-            price.SetUserPrice(region);
-            string title = await cmd.ProccesSelection(mainDB, gameTitle);
+// SET UP tracking game
+            string title = await mainDB.ProccesSelection(gameTitle);
             int gameId = await mainDB.GetGameID(title);
+            price.SetUserPrice(region);
             (string gamePrice, int discount) = await price.GetPrice(gameId);
             var game = new TrackedGamesItem(gameId, gamePrice, discount, title);
             
             await trackedGamesDB.AddTrackingGame(game);
 
+// SET UP user
             string name = "Sadyr";
             long userId = await userDB.GetUserId(name);
             var user = new UserItem(name, userId);
 
             await userDB.AddUserItem(user);
-            await dbSerivce.AddToUserWishlist(userId, gameTitle);
+
+// SET UP users wishlist
+            await userWishlistService.AddByTitle(userId, gameTitle);
 
             Console.WriteLine($"User: {userId} games: ");
             foreach(var g in await userWishlistDB.GetGamesFromWishlist(userId))

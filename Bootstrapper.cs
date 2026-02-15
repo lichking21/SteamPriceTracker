@@ -31,10 +31,9 @@ public static class Bootstrapper
         services.AddScoped<TrackedGamesDB>();
         services.AddScoped<UserDB>();
         services.AddScoped<UserWishlistDB>();
-        services.AddScoped<DBService>();
+        services.AddScoped<UserWishlistService>();
 
         services.AddSingleton<MainDB>();
-        services.AddSingleton<CMD>();
         services.AddSingleton<Price>();
         services.AddSingleton<GamesListController>();
 
