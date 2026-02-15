@@ -1,15 +1,21 @@
-using Microsoft.Extensions.Configuration;
-using Npgsql;
 using GamesListOperator;
 using Microsoft.Extensions.Logging;
+using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseOperator;
-public class MainDB : Database
+public class MainDB
 {
-    public MainDB(IConfiguration configuration, ILogger<MainDB> logger) : base(configuration, logger){}
+    private readonly ApplicationContext _context;
+    private readonly ILogger<MainDB> _logger;
+
+    public MainDB(ApplicationContext context, ILogger<MainDB> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
 
     /// <summary>
-    /// Imports games list into DataBase
+    /// Use this method to imports games list into databse. Uses raw SQL.
     /// </summary>
     public async Task ImportDataToDB(List<GameItem> gamesList)
     {
@@ -19,22 +25,14 @@ public class MainDB : Database
             return;
         }
 
-        var conn = GetConnection();
-        await conn.OpenAsync();
-
-        // Check if table is not empty
-        using (var cmdCheck = new NpgsqlCommand("SELECT EXISTS (SELECT 1 FROM public.games LIMIT 1)", conn))
+        bool exists = await _context.games.AnyAsync();
+        if (exists)
         {
-            var exists = (bool?)await cmdCheck.ExecuteScalarAsync() ?? false;
-
-            if (exists)
-            {
-                _logger.LogInformation("(LOG) >> Data is up to date");
-                return;
-            }
+            _logger.LogInformation("(LOG) >> Data is up to date");
+            return;
         }
 
-        using (var transaction =  await conn.BeginTransactionAsync())
+        using (var transaction =  await _context.Database.BeginTransactionAsync())
         {
             try
             {
@@ -43,115 +41,128 @@ public class MainDB : Database
                             DO UPDATE SET title = EXCLUDED.title
                             WHERE public.games.title IS DISTINCT FROM EXCLUDED.title;";
                 
-                using (var cmd = new NpgsqlCommand(sql, conn, transaction))
+                foreach (var game in gamesList)
                 {
-                    var idParam = cmd.Parameters.Add("id", NpgsqlTypes.NpgsqlDbType.Integer);
-                    var titleParam = cmd.Parameters.Add("title", NpgsqlTypes.NpgsqlDbType.Text);
+                    string title = game.Title ?? "UNKNOWN";
 
-                    await cmd.PrepareAsync();
-
-                    foreach (var game in gamesList)
-                    {
-                        idParam.Value = game.ID;
-                        titleParam.Value = game.Title ?? "UNKNOWN";
-
-                        await cmd.ExecuteNonQueryAsync();
-                    }
+                    await _context.Database.ExecuteSqlRawAsync(sql, game.ID, title);
                 }
 
                 await transaction.CommitAsync();
                 _logger.LogInformation($"(LOG) >> {gamesList.Count} games were imported to DB.");
             }
+
             catch (Exception ex)
             {
                 await transaction.RollbackAsync();
-                _logger.LogInformation($"(LOG) >> Failed to import data to MainDB: {ex.Message}");
+                _logger.LogError($"(ERR) >> Failed to import data to MainDB: {ex.Message}");
                 throw;
             }
         }
     }
 
     /// <summary>
-    /// Takes a string parametr 'title' and searches all appearances with that 'title'
+    /// Use this method to search titles. Uses EF core.
     /// </summary>
-    /// <param name="title"></param>
-    /// <returns>List with all 'title' appearances</returns>
+    /// <returns>List with all title appearances</returns>
     public async Task<List<string>> ExportDataByTitle(string title)
     {
-        List<string> result = new List<string>();
-
-        if (string.IsNullOrEmpty(title))
-        {
-            _logger.LogError("(ERR) >> Title value can't be empty or null");
-            return result;   
-        }
-
-        var sql = @"SELECT title FROM games WHERE title ILIKE @titleSearch";
-
-        var conn = GetConnection();
-        await conn.OpenAsync();
-
-        try
-        {
-            using (var cmd = new NpgsqlCommand(sql, conn))
-            {
-                cmd.Parameters.AddWithValue("@titleSearch", $"%{title}%");
-
-                using (var reader = await cmd.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        var gameTitle = reader.GetString(0);
-                        result.Add(gameTitle);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"(ERR) Title search failed {title}: {ex}");
-        }
-
-        return result;
-    } 
-
-    /// <summary>
-    /// Asks game title and returns its ID
-    /// </summary>
-    public async Task<int> GetGameID(string title)
-    {
-        int id = 0;
         if (string.IsNullOrEmpty(title))
         {
             _logger.LogError("(ERR) >> Title can't be null or empty");
-            return id;
+            return new List<string>();
         }
 
-        var sql = "SELECT id FROM games WHERE title=@titleSearch LIMIT 1";
+        var res = await _context.games
+            .Where(g => EF.Functions.ILike(g.Title, $"%{title}%"))
+            .Select(g => g.Title)
+            .ToListAsync();
         
-        var conn = GetConnection();
-        await conn.OpenAsync();
+        return res;
+    } 
 
-        try
+    /// <summary>
+    /// Use this method to get game's ID by it's title. Uses EF core.
+    /// </summary>
+    public async Task<int> GetGameID(string title)
+    {
+        if (string.IsNullOrEmpty(title))
         {
-            using (var command = new NpgsqlCommand(sql, conn))
-            {
-                command.Parameters.AddWithValue("@titleSearch", title);
+            _logger.LogError("Title can't be null or empty");
+            return 0;
+        }
 
-                using (var reader = await command.ExecuteReaderAsync())
-                {
-                    while (await reader.ReadAsync())
-                    {
-                        id = reader.GetInt32(0);
-                    }
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError($"(ERR) >> ID search failed: {ex}");
-        }
+        int id = await _context.games
+            .Where(g => g.Title == title)
+            .Select(g => g.Id)
+            .FirstOrDefaultAsync();
 
         return id;
     }
+
+    /// <summary>
+    /// Use this method to get game's title by it's ID. Uses EF core.
+    /// </summary>
+    public async Task<string> GetGameTitle(int id)
+    {
+        if (id == 0)
+        {
+            _logger.LogError("ID can't be 0");
+            return "";
+        }
+
+        string? title = await _context.games
+            .Where(g => g.Id == id)
+            .Select(g => g.Title)
+            .FirstOrDefaultAsync();
+
+        return title ?? "";
+    }
+
+    /// <summary>
+    /// Use this method to find all matches with searching title
+    /// </summary>
+    private void ShowSimilar(List<string> similarities)
+    {
+        Console.WriteLine($"=== Found similarities: {similarities.Count} ===");
+        foreach (string title in similarities)
+        {
+            Console.WriteLine($"- {title}");
+        }
+    }
+    
+    /// <summary>
+    /// Use this method to find match with searching title 
+    /// </summary>
+    public async Task<string> ProccesSelection(string title)
+    {
+        string resultTitle = "";
+
+        List<string> matches = await ExportDataByTitle(title);
+        int count = matches.Count;
+        string? exactMatch = matches.FirstOrDefault(title => title.Equals(title, StringComparison.OrdinalIgnoreCase));
+        
+        if (exactMatch != null)
+        {
+            _logger.LogInformation($"(LOG) >> Exact match: {exactMatch}");
+            return exactMatch;
+        }
+
+        if (count == 0)
+        {
+            _logger.LogInformation($"(LOG) >> There is no game with title: {title}");
+        }
+        else if (count == 1)
+        {
+            resultTitle = matches[0];
+            return resultTitle;
+        }
+        else if (count > 1)
+        {
+            ShowSimilar(matches);
+            _logger.LogWarning("(WARN) >> Specify your request: ");
+        }
+    
+        return resultTitle;
+    } 
 }
