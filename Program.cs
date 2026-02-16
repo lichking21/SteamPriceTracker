@@ -4,18 +4,20 @@ using DataBaseOperator;
 using DataBaseOperator.Entities;
 using Network;
 using Microsoft.Extensions.Hosting;
-using Telegram.Bot.Types;
+using Microsoft.EntityFrameworkCore;
 
 class Program
 {
     static async Task Main()
     {
         using IHost host = Bootstrapper.BuildApp();
-        await host.StartAsync();
 
         using (var scope = host.Services.CreateScope())
         {
             var services = scope.ServiceProvider;
+
+            var dbContext = services.GetRequiredService<ApplicationContext>();
+            dbContext.Database.Migrate();
 
 // CLASSES DECLARATIONS
             var mainDB = services.GetRequiredService<MainDB>();
@@ -44,17 +46,18 @@ class Program
             int gameId = await mainDB.GetGameID(title);
             (string gamePrice, int discount) = await price.GetPrice(gameId, userRegion);
             var game = new TrackedGamesItem(gameId, userRegion, gamePrice, discount, title);
-            
+
             await trackedGamesDB.AddTrackingGame(game);
 
 // SET UP users wishlist
             await userWishlistService.AddByTitle(userId, gameTitle);
 
             Console.WriteLine($"User: {userId} games: ");
-            foreach(var g in await userWishlistDB.GetGamesFromWishlist(userId))
+            foreach (var g in await userWishlistDB.GetGamesFromWishlist(userId))
             {
                 Console.WriteLine($" -{g}");
             }
         }
+        await host.RunAsync();
     }
 }
