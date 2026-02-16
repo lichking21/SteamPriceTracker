@@ -20,11 +20,11 @@ public class TrackedGamesDB
     /// <summary>
     /// Use this method to get IDs of all games from tracking list
     /// </summary>
-    public async Task<List<int>> GetIDs()
+    public async Task<List<TrackedGamesItem>> GetTrackedItem()
     {
-        List<int> ids = await _context.trackedGames.Select(w => w.GameId).ToListAsync();
-
-        return ids;
+        return await _context.trackedGames
+            .Select(tg => new TrackedGamesItem {GameId = tg.GameId, Region = tg.Region})
+            .ToListAsync();
     } 
 
     /// <summary>
@@ -32,13 +32,16 @@ public class TrackedGamesDB
     /// </summary>
     public async Task UpdateTrackItem(TrackedGamesItem item)
     {
-        var existingItem = await _context.trackedGames.FindAsync(item.GameId);
+        var existingItem = await _context.trackedGames
+            .FirstOrDefaultAsync(tg => tg.GameId == item.GameId && tg.Region == item.Region);
 
         if (existingItem != null)
         {
             existingItem.Price = item.Price;
             existingItem.Discount = item.Discount;
             existingItem.LastUpdate = DateTime.UtcNow;
+
+            await _context.SaveChangesAsync();
         }
     }
 
@@ -85,8 +88,8 @@ public class TrackedGamesDB
     /// <summary>
     /// Use this method to check if game is already in tracking list
     /// </summary>
-    public async Task<bool> IsTracking(int gameId)
+    public async Task<bool> IsTracking(int gameId, string? region)
     {
-        return await _context.trackedGames.AnyAsync(t => t.GameId == gameId);
+        return await _context.trackedGames.AnyAsync(t => t.GameId == gameId && t.Region == region);
     }
 }
