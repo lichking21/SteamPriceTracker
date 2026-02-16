@@ -50,4 +50,18 @@ public class UserDB
             _logger.LogWarning($"(WARN) >> User {item.Name} already exists in users table");
         }
     }
+
+    public async Task<string?> GetUserRegion(long id)
+    {
+        if (id == 0)
+        {
+            _logger.LogError("ID can't be 0");
+            return "";
+        }
+
+        return await _context.users
+            .Where(u => u.ID == id)
+            .Select(u => u.Region)
+            .FirstOrDefaultAsync();
+    }
 }
