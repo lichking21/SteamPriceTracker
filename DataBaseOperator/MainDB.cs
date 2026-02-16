@@ -36,7 +36,7 @@ public class MainDB
         {
             try
             {
-                string sql = @"INSERT INTO public.games(id, title) VALUES (@id, @title) 
+                string sql = @"INSERT INTO public.games(id, title) VALUES ({0}, {1}) 
                             ON CONFLICT (id) 
                             DO UPDATE SET title = EXCLUDED.title
                             WHERE public.games.title IS DISTINCT FROM EXCLUDED.title;";
@@ -93,7 +93,7 @@ public class MainDB
         }
 
         int id = await _context.games
-            .Where(g => g.Title == title)
+            .Where(g => EF.Functions.ILike(g.Title, $"%{title}%"))
             .Select(g => g.Id)
             .FirstOrDefaultAsync();
 

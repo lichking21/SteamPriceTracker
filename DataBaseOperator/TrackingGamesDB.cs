@@ -50,7 +50,8 @@ public class TrackedGamesDB
     /// </summary>
     public async Task AddTrackingGame(TrackedGamesItem item)
     {
-        bool isExists = await _context.trackedGames.AnyAsync(w => item.GameId == w.GameId);
+        bool isExists = await _context.trackedGames
+            .AnyAsync(w => item.GameId == w.GameId && item.Region == w.Region);
 
         if (isExists == false)
         {

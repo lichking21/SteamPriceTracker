@@ -26,16 +26,9 @@ class Program
             var userWishlistService = services.GetRequiredService<UserWishlistService>();
             var userWishlistDB = services.GetRequiredService<UserWishlistDB>();
 
-            if (Console.IsInputRedirected)
-            {
-                Console.WriteLine("(LOG) >>> No interactive input detected. Running background services only.");
-                await Task.Delay(Timeout.Infinite);
-                return;
-            }
-
 // SET UP
             string userRegion = "kg";
-            string gameTitle = "Mortal Kombat X";
+            string gameTitle = "The witcher 3: wild hunt";
 
             await mainDB.ImportDataToDB(await getList.ParsedJson());
 
