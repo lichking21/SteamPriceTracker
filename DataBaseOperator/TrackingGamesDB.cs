@@ -18,7 +18,7 @@ public class TrackedGamesDB
     }
 
     /// <summary>
-    /// Use this method to get IDs of all games from tracking list
+    /// Gets IDs of all games from tracking list
     /// </summary>
     public async Task<List<TrackedGamesItem>> GetTrackedItem()
     {
@@ -28,7 +28,7 @@ public class TrackedGamesDB
     } 
 
     /// <summary>
-    /// Use this method to update information about tracking game
+    /// Updates information about tracking game
     /// </summary>
     public async Task UpdateTrackItem(TrackedGamesItem item)
     {
@@ -46,7 +46,7 @@ public class TrackedGamesDB
     }
 
     /// <summary>
-    /// Use this method to add game to tracking list 
+    /// Adds game to tracking list 
     /// </summary>
     public async Task AddTrackingGame(TrackedGamesItem item)
     {
@@ -69,7 +69,7 @@ public class TrackedGamesDB
     }
 
     /// <summary>
-    /// Use this method to remove game from tracking list by ID
+    /// Removes game from tracking list by ID
     /// </summary>
     public async Task RemoveTrackingGame(int gameId)
     {
@@ -86,7 +86,7 @@ public class TrackedGamesDB
     }
 
     /// <summary>
-    /// Use this method to check if game is already in tracking list
+    /// Checks if game is already in tracking list
     /// </summary>
     public async Task<bool> IsTracking(int gameId, string? region)
     {

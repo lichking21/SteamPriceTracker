@@ -27,7 +27,7 @@ public class UserWishlistService
     } 
 
     /// <summary>
-    /// Use this method to add game to user's wishlist by it's title 
+    /// Adds game to user's wishlist by it's title 
     /// </summary>
     public async Task AddByID(long userId, int gameId)
     {
@@ -61,7 +61,7 @@ public class UserWishlistService
     }
 
     /// <summary>
-    /// Use this method to add game to user's wishlist by it's title
+    /// Adds game to user's wishlist by it's title
     /// </summary>
     public async Task AddByTitle(long userId, string gameTitle)
     {

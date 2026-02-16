@@ -36,7 +36,7 @@ public class UserWishlistDB
     }
 
     /// <summary>
-    /// Use this method to get all games from user's wishlist 
+    /// Gets all games from user's wishlist 
     /// </summary>
     /// <returns>List of game titles</returns>
     public async Task<List<string?>> GetGamesFromWishlist(long userId)
@@ -59,7 +59,7 @@ public class UserWishlistDB
     }
 
     /// <summary>
-    /// Use this method to remove game from user's wishlist by it's ID
+    /// Removes game from user's wishlist by it's ID
     /// </summary>
     public async Task RemoveGameById(long userId, int gameId)
     {
@@ -75,7 +75,7 @@ public class UserWishlistDB
     }
 
     /// <summary>
-    /// Use this method to remove game from user's wishlist by it's Title
+    /// Removes game from user's wishlist by it's Title
     /// </summary>
     /// <returns></returns>
     public async Task RemoveGameByTitle(long userId, string title)

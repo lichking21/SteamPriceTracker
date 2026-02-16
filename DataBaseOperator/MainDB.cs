@@ -15,7 +15,7 @@ public class MainDB
     }
 
     /// <summary>
-    /// Use this method to imports games list into databse. Uses raw SQL.
+    /// Imports games list into databse. Uses raw SQL.
     /// </summary>
     public async Task ImportDataToDB(List<GameItem> gamesList)
     {
@@ -62,7 +62,7 @@ public class MainDB
     }
 
     /// <summary>
-    /// Use this method to search titles. Uses EF core.
+    /// Searches titles. Uses EF core.
     /// </summary>
     /// <returns>List with all title appearances</returns>
     public async Task<List<string>> ExportDataByTitle(string title)
@@ -82,7 +82,7 @@ public class MainDB
     } 
 
     /// <summary>
-    /// Use this method to get game's ID by it's title. Uses EF core.
+    /// Gets game's ID by it's title. Uses EF core.
     /// </summary>
     public async Task<int> GetGameID(string title)
     {
@@ -101,7 +101,7 @@ public class MainDB
     }
 
     /// <summary>
-    /// Use this method to get game's title by it's ID. Uses EF core.
+    /// Gets game's title by it's ID. Uses EF core.
     /// </summary>
     public async Task<string> GetGameTitle(int id)
     {
@@ -120,7 +120,7 @@ public class MainDB
     }
 
     /// <summary>
-    /// Use this method to find all matches with searching title
+    /// Finds all matches with searching title
     /// </summary>
     private void ShowSimilar(List<string> similarities)
     {
@@ -132,7 +132,7 @@ public class MainDB
     }
     
     /// <summary>
-    /// Use this method to find match with searching title 
+    /// Finds match with searching title 
     /// </summary>
     public async Task<string> ProccesSelection(string title)
     {

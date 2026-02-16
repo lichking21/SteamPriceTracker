@@ -17,9 +17,9 @@ public class UserDB
     }
 
     /// <summary>
-    /// Use it to get information about user id by his name
+    /// Gets information about user id by his name
     /// </summary>
-    /// <returns>Id as integer value type</returns>
+    /// <returns>ID as integer value type</returns>
     public async Task<long> GetUserId(string name)
     {
         long id = await _context.users
@@ -32,6 +32,10 @@ public class UserDB
         return id;
     }
 
+
+    /// <summary>
+    /// Adds user to users table
+    /// </summary>
     public async Task AddUserItem(UserItem item)
     {
         bool ifExists = await _context.users.AnyAsync(u => u.Name == item.Name || u.ID == item.ID);
@@ -51,6 +55,10 @@ public class UserDB
         }
     }
 
+    /// <summary>
+    /// Gets user region
+    /// </summary>
+    /// <returns>Region as string nullable value</returns>
     public async Task<string?> GetUserRegion(long id)
     {
         if (id == 0)
