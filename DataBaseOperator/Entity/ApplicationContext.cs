@@ -12,8 +12,6 @@ public class ApplicationContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<GameItem>().ToTable("games", t => t.ExcludeFromMigrations());
-
         modelBuilder.Entity<UserItem>().HasIndex(u => u.ID).IsUnique();
 
         modelBuilder.Entity<TrackedGamesItem>()
