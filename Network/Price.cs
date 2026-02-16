@@ -7,7 +7,6 @@ public class Price
 {
     private static readonly HttpClient _client = new HttpClient();
     private readonly ILogger<Price> _logger;
-    private string? _region;
     public bool IsConfigured = false;
 
     public Price(ILogger<Price> logger)
@@ -16,20 +15,11 @@ public class Price
     }
 
     /// <summary>
-    /// Sets store prices according to users region
-    /// </summary>
-    public void SetUserPrice(string region) {
-    
-        _region = region;
-        IsConfigured = true;
-    } 
-
-    /// <summary>
     /// Returns game price by its ID
     /// </summary>
-    public async Task<(string finalPrice, int discount)> GetPrice(int gameId)
+    public async Task<(string finalPrice, int discount)> GetPrice(int gameId, string userRegion)
     {
-        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={_region}&l=english";
+        string url = $"https://store.steampowered.com/api/appdetails?appids={gameId}&cc={userRegion}&l=english";
 
         try
         {
@@ -67,7 +57,7 @@ public class Price
         }
         catch (Exception ex)
         {
-            _logger.LogInformation($"(ERR) >> Couldn't update price for {gameId}: {ex}");
+            _logger.LogInformation($"(ERR) >> Couldn't update price for {gameId} [{userRegion}]: {ex}");
         }
 
         return ("N/A", 0);   

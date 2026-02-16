@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 using DataBaseOperator;
 using DataBaseOperator.Entities;
+using Telegram.Bot.Types;
 
 namespace Network;
 
@@ -32,10 +33,10 @@ public class PriceUpdateWorker : BackgroundService
             {
                 using (var scope = _scopeFactory.CreateScope())
                 {
-                    var db = scope.ServiceProvider.GetRequiredService<TrackedGamesDB>();
+                    var tg = scope.ServiceProvider.GetRequiredService<TrackedGamesDB>();
 
-                    var listIds = await db.GetIDs();
-                    int count = listIds.Count;
+                    var trackedItems = await tg.GetTrackedItem();
+                    int count = trackedItems.Count;
                     _logger.LogInformation($"(LOG) >>> Found {count} items in tracking_games.");
 
                     if (count == 0)
@@ -44,24 +45,28 @@ public class PriceUpdateWorker : BackgroundService
                         continue;
                     }
 
-                    foreach (var id in listIds)
+                    foreach (var item in trackedItems)
                     {
                         if (_stopToken.IsCancellationRequested) break;
+                        if (string.IsNullOrEmpty(item.Region)) break;
 
-                        var data = await _price.GetPrice(id);
+                        var data = await _price.GetPrice(item.GameId, item.Region);
                         if (data.finalPrice != "N/A")
                         {
-                            TrackedGamesItem item = new TrackedGamesItem(id, data.finalPrice, data.discount);
+                            TrackedGamesItem updatedItem = new TrackedGamesItem(
+                                item.GameId,
+                                item.Region,
+                                data.finalPrice, 
+                                data.discount);
                             
-                            await db.UpdateTrackItem(item);
-
-                            _logger.LogInformation($"(LOG) >>> Game {id} updated {data.finalPrice} (-{data.discount}%)");
+                            await tg.UpdateTrackItem(updatedItem);
+                            _logger.LogInformation($"(LOG) >> Game {item.GameId}[{item.Region}] updated {data.finalPrice} (-{data.discount}%)");
                         }
 
                         await Task.Delay(_requestSendDelay, _stopToken);
                     }
 
-                    _logger.LogInformation($"(LOG) >>> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
+                    _logger.LogInformation($"(LOG) >> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
 
                     await Task.Delay(_pricesUpdateDelay, _stopToken);
                 }
@@ -71,7 +76,7 @@ public class PriceUpdateWorker : BackgroundService
                 if (_stopToken.IsCancellationRequested)
                     throw;
 
-                _logger.LogError($"(LOG_ERR) >>> Error in background updating: {ex}");
+                _logger.LogError($"(LOG_ERR) >> Error in background updating: {ex}");
                 await Task.Delay(TimeSpan.FromMinutes(1), _stopToken);
             }
         } 
