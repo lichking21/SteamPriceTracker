@@ -14,11 +14,15 @@ public class UserItem
     [Column("Name")]
     public string Name {get;set;} = "UNKNOWN";
 
+    [Column("Region")]
+    public string Region {get;set;} = "kg";
+
     public UserItem() {}
 
-    public UserItem(string name, long id)
+    public UserItem(string name, long id, string region)
     {
         Name = name;
         ID = id;
+        Region = region;
     }
 }

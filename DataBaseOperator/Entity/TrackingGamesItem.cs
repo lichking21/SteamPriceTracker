@@ -3,12 +3,15 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace DataBaseOperator.Entities;
 
+[Table("tracked_games")]
 public class TrackedGamesItem
 {
-    [Key]
     [Column("game_id")]
     public int GameId {get;set;}
-    
+
+    [Column("region")]
+    public string Region {get;set;} = "kg";
+
     [Column("price")]
     public string Price {get;set;} = "N/A";
     
@@ -23,11 +26,12 @@ public class TrackedGamesItem
 
     public TrackedGamesItem() {}
 
-    public TrackedGamesItem(int gameId, string price, int discount, string? title = null)
+    public TrackedGamesItem(int gameId, string region, string price, int discount, string? title = null)
     {
         GameId = gameId;
         Price = price;
         Discount = discount;
         Title = title;
+        Region = region;
     }
 }
