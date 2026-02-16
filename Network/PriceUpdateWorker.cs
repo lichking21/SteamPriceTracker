@@ -10,16 +10,14 @@ namespace Network;
 public class PriceUpdateWorker : BackgroundService
 {
     private readonly IServiceScopeFactory _scopeFactory;
-    private readonly Price _price;
     private readonly ILogger<PriceUpdateWorker> _logger;
 
     private readonly TimeSpan _requestSendDelay = TimeSpan.FromSeconds(60);
     private readonly TimeSpan _pricesUpdateDelay = TimeSpan.FromHours(2);
 
-    public PriceUpdateWorker(IServiceScopeFactory scopeFactory, Price price, ILogger<PriceUpdateWorker> logger)
+    public PriceUpdateWorker(IServiceScopeFactory scopeFactory, ILogger<PriceUpdateWorker> logger)
     {
         _scopeFactory = scopeFactory;
-        _price = price;
         _logger = logger;
     }
 
@@ -34,6 +32,7 @@ public class PriceUpdateWorker : BackgroundService
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var tg = scope.ServiceProvider.GetRequiredService<TrackedGamesDB>();
+                    var priceService = scope.ServiceProvider.GetRequiredService<Price>();
 
                     var trackedItems = await tg.GetTrackedItem();
                     int count = trackedItems.Count;
@@ -48,9 +47,9 @@ public class PriceUpdateWorker : BackgroundService
                     foreach (var item in trackedItems)
                     {
                         if (_stopToken.IsCancellationRequested) break;
-                        if (string.IsNullOrEmpty(item.Region)) break;
+                        if (string.IsNullOrEmpty(item.Region)) continue;
 
-                        var data = await _price.GetPrice(item.GameId, item.Region);
+                        var data = await priceService.GetPrice(item.GameId, item.Region);
                         if (data.finalPrice != "N/A")
                         {
                             TrackedGamesItem updatedItem = new TrackedGamesItem(
@@ -66,10 +65,10 @@ public class PriceUpdateWorker : BackgroundService
                         await Task.Delay(_requestSendDelay, _stopToken);
                     }
 
-                    _logger.LogInformation($"(LOG) >> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
-
-                    await Task.Delay(_pricesUpdateDelay, _stopToken);
                 }
+                _logger.LogInformation($"(LOG) >> Update finished. Next update after {_pricesUpdateDelay.TotalHours} hours");
+
+                await Task.Delay(_pricesUpdateDelay, _stopToken);
             }
             catch (Exception ex)
             {

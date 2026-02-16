@@ -34,26 +34,25 @@ class Program
             }
 
 // SET UP
-            string region = "kg";
+            string userRegion = "kg";
             string gameTitle = "Mortal Kombat X";
 
             await mainDB.ImportDataToDB(await getList.ParsedJson());
 
+// SET UP user
+            string name = "Sooronbai";
+            long userId = 16111958;
+            var user = new UserItem(name, userId, userRegion);
+
+            await userDB.AddUserItem(user);
+
 // SET UP tracking game
             string title = await mainDB.ProccesSelection(gameTitle);
             int gameId = await mainDB.GetGameID(title);
-            price.SetUserPrice(region);
-            (string gamePrice, int discount) = await price.GetPrice(gameId);
-            var game = new TrackedGamesItem(gameId, gamePrice, discount, title);
+            (string gamePrice, int discount) = await price.GetPrice(gameId, userRegion);
+            var game = new TrackedGamesItem(gameId, userRegion, gamePrice, discount, title);
             
             await trackedGamesDB.AddTrackingGame(game);
-
-// SET UP user
-            string name = "Sadyr";
-            long userId = await userDB.GetUserId(name);
-            var user = new UserItem(name, userId);
-
-            await userDB.AddUserItem(user);
 
 // SET UP users wishlist
             await userWishlistService.AddByTitle(userId, gameTitle);

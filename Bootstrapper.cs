@@ -32,9 +32,9 @@ public static class Bootstrapper
         services.AddScoped<UserDB>();
         services.AddScoped<UserWishlistDB>();
         services.AddScoped<UserWishlistService>();
+        services.AddScoped<MainDB>();
+        services.AddScoped<Price>();
 
-        services.AddSingleton<MainDB>();
-        services.AddSingleton<Price>();
         services.AddSingleton<GamesListController>();
 
         services.AddHostedService<PriceUpdateWorker>();
