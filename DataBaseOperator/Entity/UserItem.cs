@@ -17,12 +17,16 @@ public class UserItem
     [Column("Region")]
     public string Region {get;set;} = "kg";
 
+    [Column("State")]
+    public string State {get;set;} = "hub";
+
     public UserItem() {}
 
-    public UserItem(string name, long id, string region)
+    public UserItem(string name, long id, string region, string state)
     {
         Name = name;
         ID = id;
         Region = region;
+        State = state;
     }
 }

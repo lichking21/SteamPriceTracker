@@ -1,4 +1,3 @@
-using System.Threading.Tasks;
 using DataBaseOperator.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
