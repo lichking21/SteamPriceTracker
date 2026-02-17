@@ -11,8 +11,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace SteamPriceTracker.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20260216120608_AddCompositeKeyTrackedGames")]
-    partial class AddCompositeKeyTrackedGames
+    [Migration("20260217191518_InitialMigration")]
+    partial class InitialMigration
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -37,10 +37,7 @@ namespace SteamPriceTracker.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("games", null, t =>
-                        {
-                            t.ExcludeFromMigrations();
-                        });
+                    b.ToTable("games", (string)null);
                 });
 
             modelBuilder.Entity("DataBaseOperator.Entities.TrackedGamesItem", b =>
