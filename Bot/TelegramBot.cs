@@ -5,6 +5,7 @@ using Telegram.Bot;
 using Telegram.Bot.Polling;
 using Telegram.Bot.Types;
 using Telegram.Bot.Types.Enums;
+using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Bot;
 
@@ -61,13 +62,37 @@ public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logg
         }
 
         var chatId = update.Message.Chat.Id;
-        _logger.LogInformation($"(LOG) >> Echoing message from chat {chatId}");
+        _logger.LogInformation($"(LOG) >> Message from {chatId}");
+        switch (text)
+        {
+            case "/start":
+                await SendWelcomeMessageAsync(botClient, chatId, cancellationToken);
+                break;
+            case "/help":
+            default:
+                break;
+        }
+    }
+
+    private static async Task SendWelcomeMessageAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    {
+        var keyboard = new ReplyKeyboardMarkup(new[]
+        {
+            new KeyboardButton[] { "Add Game", "My Wishlist" }
+        })
+        {
+            ResizeKeyboard = true,
+            IsPersistent = true
+        };
 
         await botClient.SendMessage(
             chatId: chatId,
-            text: text,
-            cancellationToken: cancellationToken);
+            text: "Welcome to the Steam Price Tracker bot!",
+            replyMarkup: keyboard,
+            cancellationToken: cancellationToken
+        );
     }
+
 
     private Task HandlePollingErrorAsync(ITelegramBotClient botClient, Exception exception, CancellationToken cancellationToken)
     {
