@@ -16,7 +16,7 @@ class Program
             var services = scope.ServiceProvider;
 
             var dbContext = services.GetRequiredService<ApplicationContext>();
-            dbContext.Database.Migrate();
+            await dbContext.Database.MigrateAsync();
 
 // CLASSES DECLARATIONS
             var mainDB = services.GetRequiredService<MainDB>();

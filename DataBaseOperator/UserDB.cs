@@ -4,6 +4,10 @@ using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 
+/// TODO: 
+/// add function to change user state
+/// add function to get UserItem
+
 public class UserDB
 {
     private readonly ApplicationContext _context;
@@ -19,7 +23,7 @@ public class UserDB
     /// Gets information about user id by his name
     /// </summary>
     /// <returns>ID as integer value type</returns>
-    public async Task<long> GetUserId(string name)
+    private async Task<long> GetUserId(string name)
     {
         long id = await _context.users
             .Where(u => u.Name != null && EF.Functions.ILike(u.Name, $"%{name}%"))
@@ -31,15 +35,49 @@ public class UserDB
         return id;
     }
 
+    private async Task<bool> IsUserExist(long id)
+    {
+        var exists = await _context.users.AnyAsync(u => u.ID == id);
+
+        if (!exists)
+        {
+            _logger.LogError($"(ERR) >> User [{id}] not found");
+            return false;
+        }
+        else 
+            return true;
+    }
+
+    public async Task<UserItem> GetUser(long id)
+    {
+        if (await IsUserExist(id) == true)
+        {
+            var userItem = await _context.users
+                .Where(u => u.ID == id)
+                .Select(u => new UserItem {ID = u.ID, Name = u.Name, Region = u.Region, State = u.State})
+                .FirstOrDefaultAsync();
+
+            if (userItem != null)
+                return userItem;
+            else
+                _logger.LogError($"(ERR) >> UserItem is null");
+        }
+    
+       return new UserItem{};
+    }
 
     /// <summary>
     /// Adds user to users table
     /// </summary>
     public async Task AddUserItem(UserItem item)
     {
-        bool ifExists = await _context.users.AnyAsync(u => u.Name == item.Name || u.ID == item.ID);
+        if (item == null)
+        {
+            _logger.LogError("(ERR) >> UserItem can't be null");
+            return;
+        }
 
-        if (ifExists == false)
+        if (await IsUserExist(item.ID) == false)
         {
             item.Name = string.IsNullOrEmpty(item.Name) ? "UNKNOWN" : item.Name;
 
@@ -66,9 +104,14 @@ public class UserDB
             return "";
         }
 
-        return await _context.users
-            .Where(u => u.ID == id)
-            .Select(u => u.Region)
-            .FirstOrDefaultAsync();
+        if (await IsUserExist(id) == true)
+        {
+            return await _context.users
+                .Where(u => u.ID == id)
+                .Select(u => u.Region)
+                .FirstOrDefaultAsync();
+        } 
+
+        return "";
     }
 }
