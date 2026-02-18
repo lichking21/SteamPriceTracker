@@ -1,4 +1,7 @@
+using DataBaseOperator;
+using DataBaseOperator.Entities;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Telegram.Bot;
@@ -9,8 +12,9 @@ using Telegram.Bot.Types.ReplyMarkups;
 
 namespace Bot;
 
-public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logger) : BackgroundService
+public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logger, IServiceScopeFactory scopeFactory) : BackgroundService
 {
+    private readonly IServiceScopeFactory _scopeFactory = scopeFactory;
     private readonly IConfiguration _configuration = configuration;
     private readonly ILogger<TelegramBot> _logger = logger;
 
@@ -61,20 +65,162 @@ public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logg
             return;
         }
 
-        var chatId = update.Message.Chat.Id;
-        _logger.LogInformation($"(LOG) >> Message from {chatId}");
+        if (update.Message.From is null)
+        {
+            return;
+        }
+
+        UserItem user = await ValidateUser(update.Message.From);
+        using var scope = _scopeFactory.CreateScope();
+        var userDb = scope.ServiceProvider.GetRequiredService<UserDB>();
         switch (text)
         {
             case "/start":
-                await SendWelcomeMessageAsync(botClient, chatId, cancellationToken);
-                break;
+                await SendWelcomeMessageAsync(botClient, user, cancellationToken);
+                await userDb.SetUserState(user.ID, "hub");
+                return;
+            case "Add Game":
+                await SendAddGameMessageAsync(botClient, user, cancellationToken);
+                await userDb.SetUserState(user.ID, "add_game");
+                return;
+            case "My Wishlist":
+                await SendMyWishlistMessageAsync(botClient, user, cancellationToken);
+                return;
             case "/help":
             default:
                 break;
         }
+        switch (user.State)
+        {
+            case "hub":
+                await HandleHubMessageAsync(botClient, user, text, cancellationToken);
+                break;
+            case "add_game":
+                await HandleAddGameMessageAsync(botClient, user, text, cancellationToken);
+                break;
+        }
     }
 
-    private static async Task SendWelcomeMessageAsync(ITelegramBotClient botClient, long chatId, CancellationToken cancellationToken)
+    private async Task<UserItem> ValidateUser(User user)
+    {
+        // TODO: Probably talk about redis
+        using var scope = _scopeFactory.CreateScope();
+        var userDb = scope.ServiceProvider.GetRequiredService<UserDB>();
+
+        if (await userDb.IsUserExist(user.Id))
+        {
+            return await userDb.GetUser(user.Id);
+        }
+        // TODO: Function must return UserItem
+        var userItem = new UserItem
+        {
+            ID = user.Id,
+            Name = user.FirstName,
+        };
+
+        await userDb.AddUserItem(userItem);
+        return userItem;
+    }
+
+    private async Task HandleHubMessageAsync(ITelegramBotClient botClient, UserItem user, string text, CancellationToken cancellationToken)
+    {
+        switch (text)
+        {
+            default:
+                await botClient.SendMessage(
+                    chatId: user.ID,
+                    text: "Welcome to Steam Price Tracker! Select one of the following options",
+                    cancellationToken: cancellationToken
+                );
+                break;
+        }
+    }
+
+    private async Task HandleAddGameMessageAsync(ITelegramBotClient botClient, UserItem user, string text, CancellationToken cancellationToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var gameDb = scope.ServiceProvider.GetRequiredService<MainDB>();
+        var userDb = scope.ServiceProvider.GetRequiredService<UserDB>();
+
+        var gameList = await gameDb.ExportDataByTitle(text);
+        switch (gameList.Count)
+        {
+            case 0:
+                await botClient.SendMessage(
+                    chatId: user.ID,
+                    text: "No games found with that title",
+                    cancellationToken: cancellationToken
+                );
+                break;
+            case 1:
+                var msg = await botClient.SendMessage(
+                    chatId: user.ID,
+                    text: $"Game found: {gameList[0]}. Adding to wishlist...",
+                    cancellationToken: cancellationToken
+                );
+
+                await AddGameToWishlist(user.ID, gameList[0]);
+
+                await botClient.EditMessageText(
+                    chatId: user.ID,
+                    messageId: msg.Id,
+                    text: $"Game {gameList[0]} added to wishlist.",
+                    cancellationToken: cancellationToken
+                );
+                await userDb.SetUserState(user.ID, "hub");
+                break;
+            case > 1:
+                var listToString = string.Join("\n", gameList.Select(game => $"• {game}"));
+                await botClient.SendMessage(
+                    chatId: user.ID,
+                    text: $"Games found:\n{listToString}",
+                    cancellationToken: cancellationToken
+                );
+                break;
+            default:
+                await botClient.SendMessage(
+                    chatId: user.ID,
+                    text: "Unreachable",
+                    cancellationToken: cancellationToken
+                );
+                break;
+        }
+    }
+    private async Task AddGameToWishlist(long userId, string gameName)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        // TODO: Remove this line
+        var mainDb = scope.ServiceProvider.GetRequiredService<MainDB>();
+        var userWishlistDb = scope.ServiceProvider.GetRequiredService<UserWishlistDB>();
+
+        var gameId = await mainDb.GetGameID(gameName);
+        await userWishlistDb.AddLink(userId, gameId);
+    }
+
+    private async Task SendMyWishlistMessageAsync(ITelegramBotClient botClient, UserItem user, CancellationToken cancellationToken)
+    {
+        using var scope = _scopeFactory.CreateScope();
+        var userWishlistDb = scope.ServiceProvider.GetRequiredService<UserWishlistDB>();
+
+        var games = await userWishlistDb.GetGamesFromWishlist(user.ID);
+        if (games.Count == 0)
+        {
+            await botClient.SendMessage(
+                chatId: user.ID,
+                text: "Your wishlist is empty!",
+                cancellationToken: cancellationToken
+            );
+            return;
+        }
+
+        await botClient.SendMessage(
+            chatId: user.ID,
+            text: $"Your wishlist contains {games.Count} games: {games}",
+            cancellationToken: cancellationToken
+        );
+    }
+
+    private static async Task SendWelcomeMessageAsync(ITelegramBotClient botClient, UserItem user, CancellationToken cancellationToken)
     {
         var keyboard = new ReplyKeyboardMarkup(new[]
         {
@@ -86,9 +232,18 @@ public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logg
         };
 
         await botClient.SendMessage(
-            chatId: chatId,
-            text: "Welcome to the Steam Price Tracker bot!",
+            chatId: user.ID,
+            text: $"Welcome to the Steam Price Tracker bot {user.Name}!",
             replyMarkup: keyboard,
+            cancellationToken: cancellationToken
+        );
+    }
+
+    private static async Task SendAddGameMessageAsync(ITelegramBotClient botClient, UserItem user, CancellationToken cancellationToken)
+    {
+        await botClient.SendMessage(
+            chatId: user.ID,
+            text: "Please enter the name of the game you want to add:",
             cancellationToken: cancellationToken
         );
     }
