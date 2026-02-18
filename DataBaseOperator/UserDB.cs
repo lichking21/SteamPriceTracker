@@ -4,9 +4,11 @@ using Microsoft.Extensions.Logging;
 
 namespace DataBaseOperator;
 
-/// TODO: 
+/// TODO:
 /// add function to change user state
-/// add function to get UserItem
+/// use exceptions instead of if statements
+/// return UserItem even on creation
+/// return UserItem? in getUser
 
 public class UserDB
 {
@@ -35,7 +37,7 @@ public class UserDB
         return id;
     }
 
-    private async Task<bool> IsUserExist(long id)
+    public async Task<bool> IsUserExist(long id)
     {
         var exists = await _context.users.AnyAsync(u => u.ID == id);
 
@@ -44,7 +46,7 @@ public class UserDB
             _logger.LogError($"(ERR) >> User [{id}] not found");
             return false;
         }
-        else 
+        else
             return true;
     }
 
@@ -54,7 +56,7 @@ public class UserDB
         {
             var userItem = await _context.users
                 .Where(u => u.ID == id)
-                .Select(u => new UserItem {ID = u.ID, Name = u.Name, Region = u.Region, State = u.State})
+                .Select(u => new UserItem { ID = u.ID, Name = u.Name, Region = u.Region, State = u.State })
                 .FirstOrDefaultAsync();
 
             if (userItem != null)
@@ -62,8 +64,8 @@ public class UserDB
             else
                 _logger.LogError($"(ERR) >> UserItem is null");
         }
-    
-       return new UserItem{};
+
+        return new UserItem { };
     }
 
     /// <summary>
@@ -110,8 +112,25 @@ public class UserDB
                 .Where(u => u.ID == id)
                 .Select(u => u.Region)
                 .FirstOrDefaultAsync();
-        } 
+        }
 
         return "";
+    }
+
+    /// <summary>
+    /// Updates user's dialog state.
+    /// </summary>
+    public async Task SetUserState(long id, string state)
+    {
+        var user = await _context.users.FirstOrDefaultAsync(u => u.ID == id);
+        if (user == null)
+        {
+            _logger.LogError($"(ERR) >> User [{id}] not found");
+            return;
+        }
+
+        user.State = state;
+        await _context.SaveChangesAsync();
+        _logger.LogInformation($"(LOG) >> User [{id}] state changed to '{state}'");
     }
 }
