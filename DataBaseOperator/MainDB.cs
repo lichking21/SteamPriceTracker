@@ -3,6 +3,10 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 
 namespace DataBaseOperator;
+
+/// TODO:
+/// Return gameItem in ExportDataByTitle
+
 public class MainDB
 {
     private readonly ApplicationContext _context;
@@ -32,15 +36,15 @@ public class MainDB
             return;
         }
 
-        using (var transaction =  await _context.Database.BeginTransactionAsync())
+        using (var transaction = await _context.Database.BeginTransactionAsync())
         {
             try
             {
-                string sql = @"INSERT INTO public.games(id, title) VALUES ({0}, {1}) 
-                            ON CONFLICT (id) 
+                string sql = @"INSERT INTO public.games(id, title) VALUES ({0}, {1})
+                            ON CONFLICT (id)
                             DO UPDATE SET title = EXCLUDED.title
                             WHERE public.games.title IS DISTINCT FROM EXCLUDED.title;";
-                
+
                 foreach (var game in gamesList)
                 {
                     string title = game.Title ?? "UNKNOWN";
@@ -77,9 +81,9 @@ public class MainDB
             .Where(g => EF.Functions.ILike(g.Title, $"%{title}%"))
             .Select(g => g.Title)
             .ToListAsync();
-        
+
         return res;
-    } 
+    }
 
     /// <summary>
     /// Gets game's ID by it's title. Uses EF core.
@@ -130,9 +134,9 @@ public class MainDB
             Console.WriteLine($"- {title}");
         }
     }
-    
+
     /// <summary>
-    /// Finds match with searching title 
+    /// Finds match with searching title
     /// </summary>
     public async Task<string> ProccesSelection(string title)
     {
@@ -141,7 +145,7 @@ public class MainDB
         List<string> matches = await ExportDataByTitle(title);
         int count = matches.Count;
         string? exactMatch = matches.FirstOrDefault(title => title.Equals(title, StringComparison.OrdinalIgnoreCase));
-        
+
         if (exactMatch != null)
         {
             _logger.LogInformation($"(LOG) >> Exact match: {exactMatch}");
@@ -162,7 +166,7 @@ public class MainDB
             ShowSimilar(matches);
             _logger.LogWarning("(WARN) >> Specify your request: ");
         }
-    
+
         return resultTitle;
-    } 
+    }
 }
