@@ -143,6 +143,8 @@ public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logg
         var userDb = scope.ServiceProvider.GetRequiredService<UserDB>();
 
         var gameList = await gameDb.ExportDataByTitle(text);
+        string title = gameList[0].Title; // DOBAVIL
+
         switch (gameList.Count)
         {
             case 0:
@@ -155,16 +157,16 @@ public class TelegramBot(IConfiguration configuration, ILogger<TelegramBot> logg
             case 1:
                 var msg = await botClient.SendMessage(
                     chatId: user.ID,
-                    text: $"Game found: {gameList[0]}. Adding to wishlist...",
+                    text: $"Game found: {title}. Adding to wishlist...",
                     cancellationToken: cancellationToken
                 );
 
-                await AddGameToWishlist(user.ID, gameList[0]);
+                await AddGameToWishlist(user.ID, title);
 
                 await botClient.EditMessageText(
                     chatId: user.ID,
                     messageId: msg.Id,
-                    text: $"Game {gameList[0]} added to wishlist.",
+                    text: $"Game {title} added to wishlist.",
                     cancellationToken: cancellationToken
                 );
                 await userDb.SetUserState(user.ID, "hub");

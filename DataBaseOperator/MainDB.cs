@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace DataBaseOperator;
 
 /// TODO:
-/// Return gameItem in ExportDataByTitle
+/// Return list of gameItem in ExportDataByTitle
 
 public class MainDB
 {
@@ -69,17 +69,17 @@ public class MainDB
     /// Searches titles. Uses EF core.
     /// </summary>
     /// <returns>List with all title appearances</returns>
-    public async Task<List<string>> ExportDataByTitle(string title)
+    public async Task<List<GameItem>> ExportDataByTitle(string title)
     {
         if (string.IsNullOrEmpty(title))
         {
             _logger.LogError("(ERR) >> Title can't be null or empty");
-            return new List<string>();
+            return new List<GameItem>();
         }
 
         var res = await _context.games
             .Where(g => EF.Functions.ILike(g.Title, $"%{title}%"))
-            .Select(g => g.Title)
+            .Select(g => new GameItem { ID = g.Id, Title = g.Title })
             .ToListAsync();
 
         return res;
@@ -142,9 +142,9 @@ public class MainDB
     {
         string resultTitle = "";
 
-        List<string> matches = await ExportDataByTitle(title);
+        var matches = await ExportDataByTitle(title);
         int count = matches.Count;
-        string? exactMatch = matches.FirstOrDefault(title => title.Equals(title, StringComparison.OrdinalIgnoreCase));
+        string? exactMatch = matches.FirstOrDefault(g => g.Title.Equals(title, StringComparison.OrdinalIgnoreCase))?.Title;
 
         if (exactMatch != null)
         {
@@ -158,12 +158,12 @@ public class MainDB
         }
         else if (count == 1)
         {
-            resultTitle = matches[0];
+            resultTitle = matches[0].Title;
             return resultTitle;
         }
         else if (count > 1)
         {
-            ShowSimilar(matches);
+            ShowSimilar(matches.Select(g => g.Title).ToList());
             _logger.LogWarning("(WARN) >> Specify your request: ");
         }
 
