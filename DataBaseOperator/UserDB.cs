@@ -39,33 +39,50 @@ public class UserDB
 
     public async Task<bool> IsUserExist(long id)
     {
-        var exists = await _context.users.AnyAsync(u => u.ID == id);
-
-        if (!exists)
+        if (id == 0)
         {
-            _logger.LogError($"(ERR) >> User [{id}] not found");
+            _logger.LogError("(ERR) >> User id can't be 0");
             return false;
         }
-        else
+
+        try
+        {
+            var exists = await _context.users.AnyAsync(u => u.ID == id);
             return true;
+        }
+        catch (ArgumentNullException nullEx)
+        {
+            _logger.LogError($"(ERR) >> User [{id}] not found: {nullEx}");
+            return false;
+        }
+        catch (OperationCanceledException cancelEx)
+        {
+            _logger.LogWarning($"(WARN) >> IsUserExist() operation vas cancelled: {cancelEx}");
+            return false;
+        }
     }
 
-    public async Task<UserItem> GetUser(long id)
+    public async Task<UserItem?> GetUser(long id)
     {
-        if (await IsUserExist(id) == true)
+        try
         {
             var userItem = await _context.users
                 .Where(u => u.ID == id)
                 .Select(u => new UserItem { ID = u.ID, Name = u.Name, Region = u.Region, State = u.State })
                 .FirstOrDefaultAsync();
 
-            if (userItem != null)
-                return userItem;
-            else
-                _logger.LogError($"(ERR) >> UserItem is null");
+            return userItem;
         }
-
-        return new UserItem { };
+        catch (ArgumentNullException nullEx)
+        {
+            _logger.LogError($"(ERR) >> User [{id}] not found: {nullEx}");
+            return null;
+        }
+        catch (OperationCanceledException cancellEx)
+        {
+            _logger.LogWarning($"(WARN) >> GetUser() operation was cancelled: {cancellEx}");
+            return null;
+        }
     }
 
     /// <summary>
@@ -73,12 +90,6 @@ public class UserDB
     /// </summary>
     public async Task AddUserItem(UserItem item)
     {
-        if (item == null)
-        {
-            _logger.LogError("(ERR) >> UserItem can't be null");
-            return;
-        }
-
         if (await IsUserExist(item.ID) == false)
         {
             item.Name = string.IsNullOrEmpty(item.Name) ? "UNKNOWN" : item.Name;
@@ -100,21 +111,23 @@ public class UserDB
     /// <returns>Region as string nullable value</returns>
     public async Task<string?> GetUserRegion(long id)
     {
-        if (id == 0)
-        {
-            _logger.LogError("ID can't be 0");
-            return "";
-        }
-
-        if (await IsUserExist(id) == true)
+        try
         {
             return await _context.users
                 .Where(u => u.ID == id)
                 .Select(u => u.Region)
                 .FirstOrDefaultAsync();
         }
-
-        return "";
+        catch (ArgumentNullException nullEx)
+        {
+            _logger.LogError($"(ERR) >> User [{id}] not found: {nullEx}");
+            return "";
+        }
+        catch (OperationCanceledException cancellEx)
+        {
+            _logger.LogWarning($"(WARN) >> GetUserRegion() operation was cancelled: {cancellEx}");
+            return "";
+        }
     }
 
     /// <summary>
@@ -122,15 +135,24 @@ public class UserDB
     /// </summary>
     public async Task SetUserState(long id, string state)
     {
-        var user = await _context.users.FirstOrDefaultAsync(u => u.ID == id);
-        if (user == null)
+        try
         {
-            _logger.LogError($"(ERR) >> User [{id}] not found");
+            var user = await _context.users.FirstOrDefaultAsync(u => u.ID == id);
+            if (user == null)
+            {
+                _logger.LogError($"(ERR) >> User [{id}] not found");
+                return;
+            }
+         
+            user.State = state;
+            await _context.SaveChangesAsync();
+            
+            _logger.LogInformation($"(LOG) >> User [{id}] state changed to '{state}'");
+        }
+        catch (OperationCanceledException cancelEx)
+        {
+            _logger.LogWarning($"(WARN) >> SetUserState() operation was cancelled: {cancelEx}");
             return;
         }
-
-        user.State = state;
-        await _context.SaveChangesAsync();
-        _logger.LogInformation($"(LOG) >> User [{id}] state changed to '{state}'");
     }
 }
